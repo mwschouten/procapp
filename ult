@@ -1,0 +1,37 @@
+Help on instance of Add in module tasks.experts.tasks:
+
+class AAdddd(tasks.experts.tools.hbtask.HbTask)
+ |  Methods defined here:
+ |  
+ |  ddeeffiinnee(self)
+ |  
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from tasks.experts.tools.hbtask.HbTask:
+ |  
+ |  ____iinniitt____(self, log=None, **kwargs)
+ |  
+ |  eexxeeccuuttee(self, **kwargs)
+ |      TO BE OVERLOADED
+ |  
+ |  llooaadd__ddeeppeennddeenncciieess(self)
+ |      load all dependencies to be given to 'execute'
+ |  
+ |  rruunn(self)
+ |      Really do something here: wrap the specific 'execute'
+ |  
+ |  sseett__rreessuulltt(self)
+ |      Based on the settings, compute the result hash and save an empty result file.
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from tasks.experts.tools.hbtask.HbTask:
+ |  
+ |  ddeeppeennddeenncciieess
+ |  
+ |  ddoonnee
+ |  
+ |  jjssoonn
+ |  
+ |  rreeaaddyy__ttoo__ggoo
+ |      Tell me if the task is ready to go: all dependencies are met
+ |  
+ |  ttooddooss

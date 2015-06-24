@@ -53,7 +53,7 @@ def check(request,task_name):
             {'error':'Invalid settings: {}'.format(action.settings.get)})
 
     action.set_result()
-    action.run()
+    # action.run()
     # print action.result
     return JsonResponse({'ok':True,
                          'taskname':task_name,
@@ -84,8 +84,8 @@ def available(request):
     hashes = request.GET.getlist('h',None)
     available = {}
     for h in hashes:
-        # try:
-        if True:
+        try:
+        # if True:
             stored = models.HBTask.objects.get(resulthash=h)
 
             obj = HbObject(hash=h)
@@ -95,8 +95,8 @@ def available(request):
 
             thisone = get_status_async(obj.content) or True
 
-        # except:
-        #     thisone = False
+        except:
+            thisone = False
         available.update({h:thisone})
     # available = {h:HbObject(h).available for h in results}
     return JsonResponse(available)

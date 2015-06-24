@@ -19,7 +19,11 @@ import time
 
 @shared_task(name='SetupDensDist',bind=True,track_started=True)
 # @app.task(name='SetupDensDist',bind=True,track_started=True)
-def setup_pieces(mytask,parent,parameters):
+def setup_pieces(mytask,settings):
+
+    parent = settings['parent']
+    parameters = settings['parameters']
+
     for i in range(10):
         mytask.update_state(state='PROGRESS',meta={'current':i,'total':10})
         time.sleep(1)
@@ -29,10 +33,13 @@ def setup_pieces(mytask,parent,parameters):
             'arguments':{'p':1},
             'buffers':[1,2,3]}
 
-# @shared_task(name='SubmitDensDist',bind=True,track_started=True)
+@shared_task(name='SubmitDensDist',bind=True,track_started=True)
 # @app.task(name='SubmitDensDist',bind=True,track_started=True)
-def submit_pieces(mytask, setup, queue):
-    return group( [call_matlab.s( 
+def submit_pieces(mytask,settings):
+    setup = settings['setup']      
+    queue = settings['queue']
+
+    g = group( [call_matlab.s( 
                     directory=setup['directory'],
                     function=setup['function'],
                     arguments=setup['arguments'].update({buffer:buf}))
@@ -56,6 +63,8 @@ def add(a,b):
 
 
 
+
+
 class Add2(HbTask):
 
     def define(self):
@@ -65,8 +74,8 @@ class Add2(HbTask):
         self.version = '0.1'
         self.result = HbObject('data')
         # Define settings
-        self.settings.add('a',type=HbObject('data'))
-        self.settings.add('b',type=HbObject('data'))
+        self.settings.add('a',type=HbObject)
+        self.settings.add('b',type=HbObject)
         self.runtask = add
 
 
@@ -152,7 +161,7 @@ def test():
     d2 =  DensifyDistribute(setup=d.result,queue='celery')
     
     logger.info('Check ready to go')
-    while not d2.ready_to_go:
+    while d2.pending_dependencies:
         logger.info('  Not ready..')
         time.sleep(1)        
 
@@ -170,5 +179,16 @@ def test():
             else:
                 logger.info('Result ({}): {}'.format(i, r.status))
 
+def test2():
+    import logging
+    logging.basicConfig()
+    A = Add2()
+    for s,v in A.settings.settings.iteritems():
+        print s,v.type
+
+    A = Add2(a=Add(a=1,b=2).result,b=Add(a=3,b=4))
+
+
+
 if __name__=='__main__':
-    test()
+    test2()

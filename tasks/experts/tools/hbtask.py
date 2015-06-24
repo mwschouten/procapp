@@ -9,7 +9,7 @@ import json
 import logging
 
 # from celery import Task
-from celery import Celery, chain
+from celery import Celery, chain, group
 from celery.local import Proxy as CeleryTaskProxy
 import celery.result 
 
@@ -26,7 +26,7 @@ app = Celery('processing',backend='amqp')
 
 try:
     import tasks.models
-    from tasks.experts.celery_expert import is_async, get_status_async
+    from tasks.experts.tools.celery_expert import is_async, get_status_async
     DJANGO=True
     print 'DJANGO FOUND'
 except:
@@ -44,6 +44,17 @@ def save_hbobject_content(content,hash):
     obj.save()
     check_stored_status(obj)
 
+
+# @app.task(name='LoadSettings')
+def load_settings(obj):
+        """ load all dependencies to be given to 'execute'
+        """
+        settings = obj.settings.get
+        
+        for i in obj.dependencies:
+            settings[i] = HbObject(hash=obj.settings.get[i]['hash'],
+                               type=obj.settings.get[i]['type']).content
+        return settings
 
 # @app.task('LoadDepsAndRun', ignore_result=True)
 # def load_deps_and_run(obj):
@@ -129,13 +140,19 @@ class HbTask():
 
 
         # Set settings
-        self.settings.set(**kwargs)
+        try:
+            self.settings.set(**kwargs)
 
+        except NotValidError as e:
+            self.log.error('Settings not valid: {}'.format(e.msg))
+            
+        if self.settings.valid:
+            self.set_result()
 
         if isinstance(self.runtask,celery.local.Proxy):
             self._do_runtask = self.runtask.s
         elif callable(self.runtask):
-            self._do_runtask = self.runtask
+            self._do_runtask = self.runtask()
         else:
             self.log.error('The runtask should be a shared_task or something running quickly that returns an AsyncResult')
 
@@ -173,10 +190,13 @@ class HbTask():
             self.result = result.typehash
 
             self.log.info('SAVE TO DJANGO {}'.format(DJANGO))
-        
+            if DJANGO:
+                self.save_task()
+
+            return True
         else:
             self.log.error('Try to set without proper settings')
-
+            return False
 
     @property
     def ready_to_go(self):
@@ -185,27 +205,22 @@ class HbTask():
         deps = self.load_dependencies()
         return not any([ is_async(d) for d in deps.values()])
             
-    def wait_for_these(self):
-        return [ d for d in deps.values() if is_async(d)]
-        
-
-    def load_dependencies(self):
-        """ load all dependencies to be given to 'execute'
+    @property
+    def pending_dependencies(self):
+        """ a list of dependencies I'm still waiting for
         """
-        deps = {}
-        for i in self.dependencies:
-            deps[i] = HbObject(hash=self.settings.get[i]['hash'],
-                               type=self.settings.get[i]['type']).content
-        return deps
+        return [r for r in self.dependencies if is_async(r)]
+
+    
+
+        
 
 
     def run(self):
         """ Really do something here: wrap the specific 'execute'
         """
 
-        self.set_result()
-    
-        if not self.result:
+        if not self.settings.valid:
             self.log.error('Settings not valid')
             return
 
@@ -215,26 +230,29 @@ class HbTask():
         result = HbObject(hash=resulthash)
         if result.content:
             self.log.info('Result already found ({})'.format(resulthash))
-            self.log.info('Result: {}'.format(result.content))
-            # show progress 
             self.log.info('Progress : {}'.format(get_status_async(result.content)))
 
         # Otherwise, submit it now
         else:
+            self.log.info('Start {} for {}'.format(self.name, resulthash))
             if DJANGO:
                 self.save_task()
 
-            self.log.info('Start {} for {}'.format(self.name, resulthash))
             # All the arguments to the task: dependencies loaded, and settings            
-
-
-
-            kwargs = self.settings.get
-            kwargs.update( self.load_dependencies() ) 
-
+            self.log.info('_do_runtask is now : {}'.format(self._do_runtask))
             # Do the work and save it
+            print 'content  : ',result.content 
+            print 'depends : ',group(self.pending_dependencies)
+            print 'loadset : ',load_settings(self)
+            print 'runtask : ',self._do_runtask() 
+            print 'save    : ',save_hbobject_content.s(resulthash)
+
+
+
             result.content = chain( 
-                    self._do_runtask(**kwargs), 
+                    group(self.pending_dependencies),
+                    # load_settings.si(self),
+                    # self._do_runtask(), 
                     save_hbobject_content.s(resulthash)
                 ).delay()
 
@@ -247,17 +265,6 @@ class HbTask():
 
         
     if DJANGO:
-        def save_run(self,task_id):
-            try:
-                stored_task = tasks.models.HBTask.objects.get(resulthash=self.result['hash'])
-            except:
-                raise Exception('Not found stored task with hash='.format(self.result['hash']))
-
-
-            stored_run = tasks.models.HBTaskRun.objects.create(
-                task = stored_task,
-                celery_id = task_id,
-            )
 
         def save_task(self):
             self.log.info('SAVE TASK TO DATABASE')
@@ -271,10 +278,22 @@ class HbTask():
                 stored_task.save()
             self.log.info('SAVED WITH ID {}'.format(stored_task.id))
 
-    @property
-    def done(self):
-        self.set_result()
-        return self.result.available
+        def save_run(self,task_id):
+            try:
+                stored_task = tasks.models.HBTask.objects.get(resulthash=self.result['hash'])
+            except:
+                raise Exception('Not found stored task with hash='.format(self.result['hash']))
+
+
+            stored_run = tasks.models.HBTaskRun.objects.create(
+                task = stored_task,
+                celery_id = task_id,
+            )
+
+    # @property
+    # def done(self):
+    #     self.set_result()
+    #     return self.result.available
 
     @property
     def todos(self):

@@ -12,6 +12,8 @@ from tasks.experts.tools.hbtask import check_stored_status
 
 import tasks.models as models
 
+
+
 def check(request,task_name):
     """ check the settings of a HbTask
     return json wi result hash, which you can then use to set up the next
@@ -25,7 +27,6 @@ def check(request,task_name):
             "y": "5",
             "x": "1"
         },
-        "ok": true,
         "result": {
             "hash": "5d8241df9311ef676a4aa5cea3b11a00",
             "type": "data"
@@ -34,7 +35,7 @@ def check(request,task_name):
     """
     try:
         todo = getattr(tasks,task_name,None)
-        print 'TASKS NOW :',tasks
+        # print 'TASKS NOW :',tasks
     except KeyError:
         return JsonResponse(
             {'error':'This {} is not a known task'.format(taskname)})
@@ -55,10 +56,11 @@ def check(request,task_name):
     action.set_result()
     # action.run()
     # print action.result
-    return JsonResponse({'ok':True,
-                         'taskname':task_name,
-                         'settings':action.settings.get,
-                         'result':action.result})
+    # return JsonResponse({'ok':True,
+    #                      'taskname':task_name,
+    #                      'settings':action.settings.get,
+    #                      'result':action.result})
+    return JsonResponse(action.description)
 
 
 def available(request):
@@ -90,14 +92,48 @@ def available(request):
 
             obj = HbObject(hash=h)
 
-            if stored.status == models.HBTask.PENDING_STATUS:
+            # check if database status is still correct
+            if stored.status < models.HBTask.OK_STATUS:
                 check_stored_status(obj)
 
-            thisone = get_status_async(obj.content) or True
+            # For an empty object, thow false
+            assert(obj.content)
+
+            if is_async(obj.content):
+                thisone = get_status_async(obj.content) or True
 
         except:
             thisone = False
         available.update({h:thisone})
-    # available = {h:HbObject(h).available for h in results}
     return JsonResponse(available)
+
+
+
+def run(request):
+    hashes = request.GET.getlist('h',None)
+    for h in hashes:
+        try:
+            stored = models.HBTask.objects.get(resulthash=h)
+            if stored.status == models.HBTask.OK_STATUS:
+                thisone = true
+            else:
+                print 'Now status      : ',stored.status
+                print 'Now submit task : ',stored.celery_taskname
+                todo = getattr(tasks,stored.celery_taskname)
+                celery_task_id = todo.delay(**json.loads(stored.parameters))
+                print 'Sent off celery : ',celery_task_id
+
+        except:
+            thisone = {'Error', 'not found in database'}
+            continue
+
+        obj = HbObject(hash=h)
+
+        # check if database status is still correct
+        if stored.status < models.HBTask.OK_STATUS:
+            check_stored_status(obj)
+            print stored.status
+
+        if is_async(obj.content):
+            thisone = get_status_async(obj.content)
 

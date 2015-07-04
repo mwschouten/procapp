@@ -57,7 +57,9 @@ class Setting:
         if self.type:
             try:
                 self.type(testval)
-            except:
+            except Exception, e:
+                logging.error('expected {}, got {}'.format(self.type,testval))
+                logging.error(e, exc_info=True)
                 return False
         return True
 

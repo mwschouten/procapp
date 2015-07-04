@@ -8,16 +8,20 @@ from django.db import models
 
 
 class HBTask(models.Model):
-    
-    PENDING_STATUS=0
-    OK_STATUS=1
-    FAIL_STATUS=2
-    STATUS_CHOICES=((PENDING_STATUS,'Pending'),(OK_STATUS,'Done'),(FAIL_STATUS,'Failed'))
+    NO_STATUS = 0
+    PENDING_STATUS=1
+    OK_STATUS=2
+    FAIL_STATUS=-1
+    STATUS_CHOICES=(
+        (NO_STATUS,'Not submitted'),
+        (PENDING_STATUS,'Pending'),
+        (OK_STATUS,'Done'),
+        (FAIL_STATUS,'Failed'))
 
     celery_taskname = models.CharField(max_length=100,blank=False)
     parameters      = models.TextField(null=True,blank=True)
     resulthash      = models.CharField(max_length=32,blank=True,null=True)
-    status          = models.IntegerField(choices=STATUS_CHOICES,default=PENDING_STATUS)
+    status          = models.IntegerField(choices=STATUS_CHOICES,default=NO_STATUS)
     submitted       = models.DateTimeField(default = datetime.datetime.now())
 
 

@@ -74,8 +74,8 @@ class Add2(HbTask):
         self.version = '0.1'
         self.result = HbObject('data')
         # Define settings
-        self.settings.add('a',type=HbObject)
-        self.settings.add('b',type=HbObject)
+        self.settings.add('a',type=HbObject('data'))
+        self.settings.add('b',type=HbObject('data'))
         self.runtask = add
 
 

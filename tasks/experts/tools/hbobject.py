@@ -33,6 +33,16 @@ class HbObject():
             self.log.head('HbObject type: {0:s}'.format(self.type))
             self.content = []
 
+
+    def __call__(self,*args,**kwargs):
+        """ Make an object of my own type, with new settings:
+        To derive from an 'empty' object which has just type,
+        makes sure that the new thing has the same type.
+        """
+        q = HbObject(*args,**kwargs)
+        assert(q.type == self.type)
+        return q
+
     @property
     def hash(self):
         """ Computes the hash from the object's log messages
@@ -70,6 +80,9 @@ class HbObject():
             pickle.dump(self.log.handler.data, fid)
             pickle.dump(self.content, fid, -1)
 
+        print 'HBOBJECT NOW SAVED {}'.format(self.hash)
+        self.log.show()
+        print 'HBOBJECT CONTENT   {}'.format(self.content)
         return
 
 
@@ -86,20 +99,16 @@ class HbObject():
 
         # Just continue when I am available
         if not self.available:
-            raise Exception('File (hash=%s) not available' % hash)
+            raise Exception('File (hash=%s) not available' % self.hash)
 
+        print 'DIRECTORY NOW: ',directory
         # Load type, log and contents from picked file
-        filename = os.path.join(directory, 'hbhash', hash + '.p')
+        filename = os.path.join(directory, 'hbhash', self.hash + '.p')
         with open(filename, 'rb') as fid:
             self.type = pickle.load(fid)
-#            print 'just read TYPE :', self.type
             self.log = HbLog()
             self.log.handler.data = pickle.load(fid)
-#            print 'just read LOG'
-#            self.log.show()
             self.content = pickle.load(fid)
-#            print 'just read CONTENT'
-            # print self.content
         return True
 
 

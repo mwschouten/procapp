@@ -1,7 +1,10 @@
 
 from celery.result import AsyncResult, GroupResult
 from celery.result import ResultBase
+from celery.canvas import Signature  
 
+def is_signature(a):
+    return isinstance(a,Signature)
 
 def is_async(a):
     return isinstance(a, ResultBase)

@@ -1,4 +1,5 @@
 from hblogger import HbLog
+from celery_expert import is_async
 import os
 import errno
 import json
@@ -24,6 +25,13 @@ class HbObject():
         if isinstance(type,dict):
             hash=type.get('hash',None)
             type=type.get('type','')
+        # elif isinstance(type,str) and type.find(':'):
+        #     try:
+        #         tt,hh = type.split(':')
+        #         assert(len(hash)==32)
+        #         type,hash=tt,hh
+        #     except:
+        #         pass
 
         if hash:
             self.load(hash=hash)
@@ -64,13 +72,40 @@ class HbObject():
         return self.type + ':' + self.hash      
 
     @property
-    def available(self, directory=os.path.abspath('.')):
-        """ Check if my contenct are already available in a file
+    def known(self, directory=os.path.abspath('.')):
+        """ Check if this thing is already in a file
         """
         filepath = os.path.join(directory, 'hbhash', self.hash + '.p')
         return os.path.isfile(filepath)
 
-    def save(self, directory=os.path.abspath('.')):
+    @property
+    def available(self, directory=os.path.abspath('.')):
+        """ Check if my content are already available in a file
+        """
+        return self.status==2
+
+    @property
+    def status(self):
+        """ give 0,1,2 for no, temporary or real content
+        TODO what if we mean to save 'false' as proper content?
+        """
+        if not self.known:
+            return 0 # no file yet
+        self.load()
+
+        if not self.content:
+            return 0
+        else:
+            if is_async(self.content):
+                return 1 # temporary content
+            else:
+                return 2 # real content
+        
+
+    def save(self, directory=os.path.abspath('.'),status=0):
+        """ save contents to pickled file
+        TODO replace by freeform database?
+        """
         dirpath = os.path.join(directory, 'hbhash')
         make_sure_path_exists(dirpath)
         filename = os.path.join(dirpath, self.hash + '.p')
@@ -98,10 +133,9 @@ class HbObject():
         self.hash = hash or self.hash
 
         # Just continue when I am available
-        if not self.available:
+        if not self.known:
             raise Exception('File (hash=%s) not available' % self.hash)
 
-        print 'DIRECTORY NOW: ',directory
         # Load type, log and contents from picked file
         filename = os.path.join(directory, 'hbhash', self.hash + '.p')
         with open(filename, 'rb') as fid:

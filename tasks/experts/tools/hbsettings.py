@@ -36,6 +36,9 @@ class Setting:
         self.name = name
         self.type=type
 
+        if isinstance((type),HbObject):
+            default = default or type
+
         if isinstance((default),HbObject):
             self.value = self.default = default.typehash
             self.dependency = True
@@ -54,7 +57,15 @@ class Setting:
 
     def validate(self, testval):
         """ Validate a single setting w.r.t. type etc. """
-        if self.type:
+        if self.type and isinstance(self.type,HbObject):
+            try:
+                assert(self.type.type == testval.result['type'])
+            except Exception, e:
+                logging.error('expected HBObject {}, got {}'.format(self.type.type,testval.result))
+                logging.error(e, exc_info=True)
+                return False
+
+        elif self.type:
             try:
                 self.type(testval)
             except Exception, e:
@@ -67,6 +78,8 @@ class Setting:
         if isinstance(val, HbObject):
             val = val.typehash
         totype = getattr(self,'type', lambda x:x)
+        print 'self : ',self.type
+        print 'val  : ',val
         self.value = totype(self.validated(val))
 
     def validated(self,testval):
@@ -136,8 +149,11 @@ class Settings:
     @property
     def dependency_dict(self):
         return {i:self.get[i] for i in self.dependencies}
-        #return {i:{'type':self.get[i].type,'hash':self.get[i].hash}
-        #           for i in self.dependencies}
+
+    @property
+    def dependency_dictstr(self):        
+        return {i:{'type':self.get[i].type,'hash':self.get[i].hash}
+                  for i in self.dependencies}
 
     @property
     def mandatory(self):

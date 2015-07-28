@@ -114,26 +114,32 @@ def run(request):
     for h in hashes:
         try:
             stored = models.HBTask.objects.get(resulthash=h)
-            if stored.status == models.HBTask.OK_STATUS:
-                thisone = true
-            else:
-                print 'Now status      : ',stored.status
-                print 'Now submit task : ',stored.celery_taskname
-                todo = getattr(tasks,stored.celery_taskname)
-                celery_task_id = todo.delay(**json.loads(stored.parameters))
-                print 'Sent off celery : ',celery_task_id
 
         except:
             thisone = {'Error', 'not found in database'}
             continue
 
-        obj = HbObject(hash=h)
 
-        # check if database status is still correct
-        if stored.status < models.HBTask.OK_STATUS:
-            check_stored_status(obj)
-            print stored.status
+        # Finished, and reported back
+        if stored.status == models.HBTask.OK_STATUS:
+            thisone = True
+    
+        # Submitted, have not heard from since
+        elif stored.status == models.HBTask.PENDING_STATUS:
+            obj = HbObject(hash=h)
+            status,fullstatus = check_stored_status(obj)
+            thisone = fullstatus or True 
 
-        if is_async(obj.content):
-            thisone = get_status_async(obj.content)
+        # resulted in error
+        elif stored.status == models.HBTask.ERROR_STATUS:
+            thisone = {'Error','something'}
+
+        # no status: submit now
+        else:
+            print 'Now status      : ',stored.status
+            print 'Now submit task : ',stored.celery_taskname
+            todo = getattr(tasks,stored.celery_taskname)
+            celery_task_id = todo.delay(**json.loads(stored.parameters))
+            print 'Sent off celery : ',celery_task_id
+
 

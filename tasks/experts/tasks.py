@@ -39,7 +39,7 @@ def submit_pieces(mytask,settings):
     setup = settings['setup']      
     queue = settings['queue']
 
-    g = group( [call_matlab.s( 
+    g = group( [call_matlab.si( 
                     directory=setup['directory'],
                     function=setup['function'],
                     arguments=setup['arguments'].update({buffer:buf}))
@@ -51,18 +51,20 @@ def submit_pieces(mytask,settings):
 # @app.task(name='SubmitDensDist2',bind=True,track_started=True)
 def submit_pieces_test(mytask, setup, queue):
     print 'SETUP : {}'.format(setup)     
-    return group( [add.s(10,buf) for buf in setup['buffers']] )
+    return group( [add.si(10,buf) for buf in setup['buffers']] )
     
 
 
 @shared_task(name='add')
 # @app.task(name='add')
 def add(a,b):
+    print 'a',a,type(a)
+    print 'b',b,type(b)
+    a = float(a)
+    b = float(b)
     time.sleep(b)
+    print 'Done ',b,' return ',a+b
     return a+b
-
-
-
 
 
 class Add2(HbTask):

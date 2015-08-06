@@ -11,13 +11,14 @@ class HBTask(models.Model):
     NO_STATUS = 0
     PENDING_STATUS=1
     OK_STATUS=2
-    FAIL_STATUS=-1
+    ERROR_STATUS=-1
     STATUS_CHOICES=(
         (NO_STATUS,'Not submitted'),
         (PENDING_STATUS,'Pending'),
         (OK_STATUS,'Done'),
-        (FAIL_STATUS,'Failed'))
+        (ERROR_STATUS,'Failed'))
 
+    hb_taskname = models.CharField(max_length=100,blank=False)
     celery_taskname = models.CharField(max_length=100,blank=False)
     parameters      = models.TextField(null=True,blank=True)
     resulthash      = models.CharField(max_length=32,blank=True,null=True)

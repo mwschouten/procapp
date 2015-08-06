@@ -11,12 +11,12 @@ from tasks.experts.tools.celery_expert import get_status_async, is_async
 from tasks.experts.tools.hbtask import check_stored_status
 
 import tasks.models as models
-
-
+import json
+import time
 
 def check(request,task_name):
     """ check the settings of a HbTask
-    return json wi result hash, which you can then use to set up the next
+    return json with result hash, which you can then use to set up the next
 
     e.g. /check/Add/?x=1&y=5
     
@@ -86,6 +86,7 @@ def available(request):
     hashes = request.GET.getlist('h',None)
     available = {}
     for h in hashes:
+        thisone = False
         try:
         # if True:
             stored = models.HBTask.objects.get(resulthash=h)
@@ -101,6 +102,8 @@ def available(request):
 
             if is_async(obj.content):
                 thisone = get_status_async(obj.content) or True
+            else:
+                thisone = True
 
         except:
             thisone = False
@@ -109,37 +112,52 @@ def available(request):
 
 
 
-def run(request):
-    hashes = request.GET.getlist('h',None)
-    for h in hashes:
-        try:
-            stored = models.HBTask.objects.get(resulthash=h)
+def run(request, resulthash):
+    """ run what it takes to get me this hash
+    """
 
-        except:
-            thisone = {'Error', 'not found in database'}
-            continue
+    try:
+        stored = models.HBTask.objects.get(resulthash=resulthash)
+    except:
+        thisone = {'Error', 'not found in database'}
 
+    # Finished, and reported back
+    if stored.status == models.HBTask.OK_STATUS:
+        thisone = True
 
-        # Finished, and reported back
-        if stored.status == models.HBTask.OK_STATUS:
-            thisone = True
-    
-        # Submitted, have not heard from since
-        elif stored.status == models.HBTask.PENDING_STATUS:
-            obj = HbObject(hash=h)
-            status,fullstatus = check_stored_status(obj)
-            thisone = fullstatus or True 
+    # Submitted, have not heard from since
+    elif stored.status == models.HBTask.PENDING_STATUS:
+        obj = HbObject(hash=resulthash)
+        status,fullstatus = check_stored_status(obj)
+        thisone = fullstatus or True 
 
-        # resulted in error
-        elif stored.status == models.HBTask.ERROR_STATUS:
-            thisone = {'Error','something'}
+    # resulted in error
+    elif stored.status == models.HBTask.ERROR_STATUS:
+        thisone = {'Error','something'}
 
-        # no status: submit now
-        else:
-            print 'Now status      : ',stored.status
-            print 'Now submit task : ',stored.celery_taskname
-            todo = getattr(tasks,stored.celery_taskname)
-            celery_task_id = todo.delay(**json.loads(stored.parameters))
-            print 'Sent off celery : ',celery_task_id
+    # no status: submit now
+    else:
+        print 'Now status      : ',stored.status
+        print 'Now submit task : ',stored.celery_taskname
 
+        # to submit celery task directly
+        # todo = getattr(tasks,stored.celery_taskname)
+        # celery_result = todo.delay(**json.loads(stored.parameters))
+        # print 'Sent off celery : ',celery_result.task_id
+        # thisone = get_status_async(celery_result)
 
+        # to submit hb task
+        todo = getattr(tasks,stored.hb_taskname)
+        # celery_result = todo.delay(**json.loads(stored.parameters))
+        parameters = json.loads(stored.parameters)
+        action = todo(**parameters)
+        action.submit()
+        time.sleep(0.5)
+        obj = HbObject(hash=resulthash)
+        status,fullstatus = check_stored_status(obj)
+        thisone = fullstatus or True 
+        print 'OK ? ',action.result
+
+    print 'resulthash : ',resulthash
+    print 'thisone : ',thisone
+    return JsonResponse({resulthash:thisone})

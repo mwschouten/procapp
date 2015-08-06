@@ -92,7 +92,7 @@ def check_stored_status(obj):
             status_checked = get_status_async(obj.content).get('status')
             # print 'STATUS CHECKED ',status_checked
             newstatus = {
-                             'FAILURE':  tasks.models.HBTask.FAIL_STATUS,
+                             'FAILURE':  tasks.models.HBTask.ERROR_STATUS,
                              'SUCCESS':  tasks.models.HBTask.OK_STATUS,
                              'PROGRESS': tasks.models.HBTask.PENDING_STATUS,
                              'PENDING':  tasks.models.HBTask.PENDING_STATUS
@@ -176,9 +176,11 @@ class HbTask():
             settings[i] = HbObject(self.settings.get[i]).content
 
         # Go
+        print 'MY TASK TO RUN ',runtask
+        print '     TYPE      ',type(runtask)
         print 'MY SETTINGS ARE NOW ',settings
 
-        return runtask.delay(settings)
+        return runtask(**settings)
 
 
 
@@ -225,14 +227,6 @@ class HbTask():
             self.log.error('Try to set without proper settings')
             return False
 
-    # @property
-    # def ready_to_go(self):
-    #     """ Tell me if the task is ready to go: all dependencies are met
-    #     """
-    #     deps = self.load_dependencies()
-    #     return not any([ is_async(d) for d in deps.values()])
-            
-
     @property
     def dependencies(self):
         return self.settings.dependencies
@@ -245,6 +239,14 @@ class HbTask():
     def dependency_dictstr(self):
         return self.settings.dependency_dictstr
 
+    @property
+    def ready_to_go(self):
+        """ Tell me if the task is ready to go: all dependencies are met
+        """
+        for d in self.dependency_dict.values():
+            if (not HbObject(d).available) or is_async(HbObject(d).content):
+                return False
+        return True
 
     @property
     def dependencies_todo(self):
@@ -269,6 +271,7 @@ class HbTask():
             print 'Check dependency {} (status : {})'.format(name,obj.status)
             if obj.status == 0:
                 dep.submit()
+
 
 
     def submit(self,redo=False):
@@ -304,8 +307,11 @@ class HbTask():
 
             self.submit_dependency_tree()
 
+            if not self.ready_to_go:
+                raise self.retry(exc=exc, countdown=10)
+
             signature = chain(
-                    check_and_wait(self.dependency_dictstr),
+                    # check_and_wait(self.dependency_dictstr),
                     self.run(),
                     save_hbobject_content.s(resulthash)
                 )
@@ -330,6 +336,7 @@ class HbTask():
             )
             if isnew:
                 self.log.info('SAVE TASK TO DATABASE')
+                stored_task.hb_taskname = self.name
                 stored_task.celery_taskname = self.runtask.name
                 stored_task.parameters = json.dumps(self.settings.getstr)
                 stored_task.status = tasks.models.HBTask.NO_STATUS

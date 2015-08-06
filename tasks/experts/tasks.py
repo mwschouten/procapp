@@ -45,7 +45,7 @@ def submit_pieces(mytask,settings):
                     arguments=setup['arguments'].update({buffer:buf}))
                 for buf in setup['buffers']]
              )
-  
+    return g
 
 # @shared_task(name='SubmitDensDist2',bind=True,track_started=True)
 # @app.task(name='SubmitDensDist2',bind=True,track_started=True)
@@ -72,7 +72,7 @@ class Add2(HbTask):
     def define(self):
         # Name, result
         self.longname = 'Add two numbers'
-        self.name = 'Add'
+        self.name = 'Add2'
         self.version = '0.1'
         self.result = HbObject('data')
         # Define settings
@@ -84,11 +84,13 @@ class Add2(HbTask):
 class Add(HbTask):
 
     def define(self):
+        
         # Name, result
         self.longname = 'Add two numbers'
         self.name = 'Add'
         self.version = '0.1'
         self.result = HbObject('data')
+
         # Define settings
         self.settings.add('a',type=float)
         self.settings.add('b',type=float)
@@ -103,6 +105,7 @@ class DensifySetup(HbTask):
         self.name = 'SetupDensDist'
         self.version = '0.1'
         self.result = HbObject('setupdata')
+        
         # Define settings
         self.settings.add('parent')
         self.settings.add('parameters')

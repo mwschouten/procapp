@@ -20,6 +20,6 @@ from tasks import views
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^check/(?P<task_name>.+?)/', views.check),
-    url(r'^run/(?P<task_name>.+?)/', views.run),
+    url(r'^run/(?P<resulthash>.+?)/', views.run),
     url(r'^available/', views.available),
 ]

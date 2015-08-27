@@ -24,6 +24,9 @@ import logging
 #       'valid_range'  :[0,1]}
 #   }
 
+def ishash(s):
+    return len(s)==32 and all([chr(i) for i in range(48,58)+range(97,103)])
+
 class Setting:
 
     def __init__(self, name, 
@@ -34,18 +37,15 @@ class Setting:
 
         assert isinstance(name, str)
         self.name = name
-        self.type=type
+        self.type = type
 
         if isinstance((type),HbObject):
-            default = default or type
-
-        if isinstance((default),HbObject):
-            self.value = self.default = default.typehash
+            default = None
             self.dependency = True
         else:
-            self.value = self.default = default
             self.dependency = False
-
+            
+        self.value = self.default = default
         self.mandatory = mandatory
 
         if validate:
@@ -57,30 +57,39 @@ class Setting:
 
     def validate(self, testval):
         """ Validate a single setting w.r.t. type etc. """
+        # check hbobject type
         if self.type and isinstance(self.type,HbObject):
             try:
-                assert(self.type.type == testval.result['type'])
+                assert(self.type.type == testval['type'])
             except Exception, e:
-                logging.error('expected HBObject {}, got {}'.format(self.type.type,testval.result))
                 logging.error(e, exc_info=True)
+                print 'TESTVAL ',testval,type(testval)
+                logging.error('expected HbObject {}, got {}'.format(self.type.type,testval))
                 return False
-
-        elif self.type:
+        # or try to cast to requested type
+        else:    
             try:
                 self.type(testval)
             except Exception, e:
-                logging.error('expected {}, got {}'.format(self.type,testval))
+                logging.error('cannot cast this {} to {}'.format(testval, self.type))
                 logging.error(e, exc_info=True)
                 return False
+
+        print 'Tested ',testval
         return True
 
     def set(self, val):
         if isinstance(val, HbObject):
             val = val.typehash
-        totype = getattr(self,'type', lambda x:x)
-        print 'self : ',self.type
-        print 'val  : ',val
-        self.value = totype(self.validated(val))
+        elif ishash(val):
+            # TODO: gettype: read only the type from hbobject instead of all data?
+            # TODO: alternatively, get type from database.
+            val = HbObject(hash=val).typehash
+
+        print 'self  : ',self.type
+        print 'val   : ',val
+        self.value = self.validated(val)
+        print 'SET VALUE ({}) : {}'.format(self.name,self.value,type(self.value))
 
     def validated(self,testval):
         # if True:
@@ -132,6 +141,8 @@ class Settings:
         Show currently set settings (also inferred from default)
         -> normal key:value dict with whatever it is
         """
+        for k,v in self.settings.iteritems():
+            print k,v,type(v)
         return {k: v.value for k, v in self.settings.iteritems()}
 
     @property
@@ -149,11 +160,6 @@ class Settings:
     @property
     def dependency_dict(self):
         return {i:self.get[i] for i in self.dependencies}
-
-    @property
-    def dependency_dictstr(self):        
-        return {i:{'type':self.get[i].type,'hash':self.get[i].hash}
-                  for i in self.dependencies}
 
     @property
     def mandatory(self):

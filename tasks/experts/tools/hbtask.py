@@ -11,13 +11,12 @@ import logging
 # from celery import Task
 from celery import Celery, chain, group
 from celery.local import Proxy as CeleryTaskProxy
-import celery.result 
 from celery import shared_task
-
-
-
+# import celery.send_task
+import celery.result 
+from celery import current_app
+# from .load_task_from_db import load_task_from_db
 # from celery.contrib.methods import task_method
-
 # import traceback
 # traceback.print_stack()
 # app = Celery('processing',backend='amqp')
@@ -30,6 +29,24 @@ try:
 except:
     DJANGO=False
     print 'DJANGO NOT FOUND'
+
+# if DJANGO:
+#     def submit_stored_task(hash):
+#         """
+#         """
+#         stored_task = tasks.models.HBTask.objects.get(resulthash=hash)
+#         pars = json.loads(stored_task.parameters)
+#         T = HbTask(empty=True)
+#         Celery().send_task( stored_task.celery_taskname, **pars )
+
+#         signature = chain(
+#                 # check_and_wait(self.dependency_dictstr),
+#                 self.run(),
+#                 save_hbobject_content.s(resulthash)
+#             )
+
+
+
 
 @shared_task(name='SaveContent', ignore_result=True)
 def save_hbobject_content(content,hash):
@@ -125,31 +142,44 @@ class HbTask():
     """
 
 
-    def __init__(self,log=None,**kwargs):
+    def __init__(self,log=None,fromdb=False,**kwargs):
 
-        self.name = ''
-        self.version = ''
-        self.settings = Settings()
-        self.result = None
+        if fromdb:
+            self.fromdb = True
 
-        # overload this define 
-        self.define()
+            stored_task = tasks.models.HBTask.objects.get(resulthash=hash)
+ 
+            self.runtask = current_app.tasks[stored_task.celery_taskname]
+            pars = json.loads(stored_task.parameters)
+            self.settings.get = pars
+             
+            self.name = stored_task.hb_taskname
+            self.log = logging.getLogger(self.name)
+ 
+        else:
+            self.name = ''
+            self.version = ''
+            self.settings = Settings()
+            self.result = None
 
-        # user short name if there is no long one
-        self.longname = getattr(self,'longname',self.name)
+            # overload this define 
+            self.define()
 
-        # celery task
-        self.name = getattr(self,'name',self.longname.title().replace(' ',''))
-        self.log = logging.getLogger(self.name)
+            # user short name if there is no long one
+            self.longname = getattr(self,'longname',self.name)
 
-        # Set settings
-        try:
-            self.settings.set(**kwargs)
-        except NotValidError as e:
-            self.log.error('Settings not valid: {}'.format(e.msg))
-            
-        if self.settings.valid:
-            self.set_result()
+            # celery task
+            self.name = getattr(self,'name',self.longname.title().replace(' ',''))
+            self.log = logging.getLogger(self.name)
+
+            # Set settings
+            try:
+                self.settings.set(**kwargs)
+            except NotValidError as e:
+                self.log.error('Settings not valid: {}'.format(e.msg))
+                
+            if self.settings.valid:
+                self.set_result()
 
         # save_hbobject_content(self.signature, self.result['hash'])
 
@@ -181,7 +211,6 @@ class HbTask():
         print 'MY SETTINGS ARE NOW ',settings
 
         return runtask(**settings)
-
 
 
     def define(self):
@@ -269,10 +298,9 @@ class HbTask():
         for name,dep in self.dependency_dict.iteritems():
             obj = HbObject(dep)
             print 'Check dependency {} (status : {})'.format(name,obj.status)
+            print dep,type(dep)
             if obj.status == 0:
-                dep.submit()
-
-
+                T = HbTask(fromdb=dep['hash'])
 
     def submit(self,redo=False):
         """ Really do something here: wrap the specific 'execute'
@@ -310,14 +338,27 @@ class HbTask():
             if not self.ready_to_go:
                 raise self.retry(exc=exc, countdown=10)
 
-            signature = chain(
-                    # check_and_wait(self.dependency_dictstr),
-                    self.run(),
-                    save_hbobject_content.s(resulthash)
-                )
 
-            print signature
-            result.content = signature.delay()
+            if self.fromdb:
+                # Settings
+                settings = self.settings.getstr
+                for i in self.dependencies:
+                    settings[i] = HbObject(self.settings.get[i]).content
+
+                signature = chain(
+                    Celery().send_task(self.runtask, **settings)
+                    )
+         
+
+            else:
+                signature = chain(
+                        # check_and_wait(self.dependency_dictstr),
+                        self.run(),
+                        save_hbobject_content.s(resulthash)
+                    )
+
+                print signature
+                result.content = signature.delay()
 
             if DJANGO:
                 self.save_run(result.content.task_id)
@@ -338,10 +379,13 @@ class HbTask():
                 self.log.info('SAVE TASK TO DATABASE')
                 stored_task.hb_taskname = self.name
                 stored_task.celery_taskname = self.runtask.name
-                stored_task.parameters = json.dumps(self.settings.getstr)
+                stored_task.parameters = json.dumps(self.settings.get)
                 stored_task.status = tasks.models.HBTask.NO_STATUS
                 stored_task.save()
                 self.log.info('SAVED WITH ID {}'.format(stored_task.id))
+
+        # def load_task(self,hash):
+        #    self.name = stored_task.hb_taskname
 
         def save_run(self,task_id):
             try:

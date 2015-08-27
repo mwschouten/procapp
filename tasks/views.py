@@ -150,6 +150,7 @@ def run(request, resulthash):
         todo = getattr(tasks,stored.hb_taskname)
         # celery_result = todo.delay(**json.loads(stored.parameters))
         parameters = json.loads(stored.parameters)
+        print 'PARAMETERS ',parameters
         action = todo(**parameters)
         action.submit()
         time.sleep(0.5)

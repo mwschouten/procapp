@@ -15,8 +15,8 @@ class HBTask(models.Model):
     STATUS_CHOICES=(
         (NO_STATUS,'Not submitted'),
         (PENDING_STATUS,'Pending'),
-        (OK_STATUS,'Done'),
-        (ERROR_STATUS,'Failed'))
+        (OK_STATUS,'Success'),
+        (ERROR_STATUS,'Failure'))
 
     hb_taskname = models.CharField(max_length=100,blank=False)
     celery_taskname = models.CharField(max_length=100,blank=False)
@@ -25,9 +25,8 @@ class HBTask(models.Model):
     status          = models.IntegerField(choices=STATUS_CHOICES,default=NO_STATUS)
     submitted       = models.DateTimeField(default = datetime.datetime.now())
 
-
     def __str__(self):
-        return '{} for {} ({})'.format(self.celery_taskname,self.resulthash, 
+        return '{} for {} ({})'.format(self.celery_taskname,self.resulthash[0:10], 
             self.STATUS_CHOICES[self.status][1])
 
 class HBTaskRun(models.Model):
@@ -42,11 +41,17 @@ class HBTaskRun(models.Model):
 
     def __str__(self):
         if self.done:
-            return 'DONE {} / {}'.format(self.task,self.celery_id)
+            return 'SUCCESS {} / {}'.format(self.task,self.celery_id)
         elif self.error:
             return 'ERROR {} / {}'.format(self.task,self.celery_id)
         else:
             return 'PENDING {} / {}'.format(self.task,self.celery_id)
 
 
+class Waiting(models.Model):
+    todo = models.ForeignKey(HBTask)
+    dependency = models.ForeignKey(HBTask,related_name='dependency')
 
+    def __str__(self):
+        return '{} waiting for {}'.format(
+            self.todo.resulthash[0:10],self.dependency.resulthash[0:10])

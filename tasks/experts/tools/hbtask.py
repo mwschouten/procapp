@@ -15,38 +15,26 @@ from celery import shared_task
 # import celery.send_task
 import celery.result 
 from celery import current_app
+
+import requests
 # from .load_task_from_db import load_task_from_db
 # from celery.contrib.methods import task_method
 # import traceback
 # traceback.print_stack()
 # app = Celery('processing',backend='amqp')
 
+base_url = 'http://127.0.0.1:8000'
+
+
 try:
     import tasks.models
     from tasks.experts.tools.celery_expert import is_async, get_status_async
     DJANGO=True
     print 'DJANGO FOUND'
+
 except:
     DJANGO=False
     print 'DJANGO NOT FOUND'
-
-# if DJANGO:
-#     def submit_stored_task(hash):
-#         """
-#         """
-#         stored_task = tasks.models.HBTask.objects.get(resulthash=hash)
-#         pars = json.loads(stored_task.parameters)
-#         T = HbTask(empty=True)
-#         Celery().send_task( stored_task.celery_taskname, **pars )
-
-#         signature = chain(
-#                 # check_and_wait(self.dependency_dictstr),
-#                 self.run(),
-#                 save_hbobject_content.s(resulthash)
-#             )
-
-
-
 
 @shared_task(name='SaveContent', ignore_result=True)
 def save_hbobject_content(content,hash):
@@ -55,84 +43,56 @@ def save_hbobject_content(content,hash):
     obj.log.info('Replace with finished content')
     obj.content = content
     obj.save()
-    print 'Saved %s',hash
-    check_stored_status(obj)
-
-
-@shared_task(name='CheckAndWait', bind=True, ignore_result=True)
-def check_and_wait(self, dependencies, errback=None):
-    """ settings are to be provided as 'getstr', to be reializable
-    Then in here we get the real HbObjects in there, and check if they're ready
-    """
-
-    print '*'*50
-    print 'dependencies : ',dependencies
-    print '*'*50
-
-
-    for name,dep in dependencies.iteritems():
-        print 'check_and_wait: Check status of {}'.format(name)
-        # check if any are not ready yet.
-        content = HbObject( dep).content
-
-        if is_async( content ):
-            print 'NOT FOUND YET SETTING {} ({})'.format(i,content)
-            raise self.retry(countdown=10)
-    # All ok? then go...
-
+    print 'Saved {}'.format(hash)
+    if DJANGO:
+        # TODO: remotes need access to the database: through api?
+        check_stored_status(obj)
 
 def check_stored_status_hash(hash):
+    if (type(hash) in [str,unicode] and hash.find(':')>0):
+        obj = HbObject(hash)
     try:
         obj = HbObject(hash=hash)
     except:
         raise Exception('Not found {}'.format(hash))
     check_stored_status(obj)
 
+def check_status(obj): 
+    """ independent of django connection, check status on filesystem
+    """
+    if obj.content == []:
+        return 0,'Empty' # tasks.models.HBTask.NO_STATUS
+
+    elif is_async ( obj.content ):
+        status_checked = get_status_async(obj.content)
+        return {'FAILURE':  -1, # tasks.models.HBTask.ERROR_STATUS,
+                 'SUCCESS':   2, # tasks.models.HBTask.OK_STATUS,
+                 'PROGRESS':  1, # tasks.models.HBTask.PENDING_STATUS,
+                 'PENDING':   1, # tasks.models.HBTask.PENDING_STATUS
+                }.get(status_checked.get('status')),status_checked.get('msg')
+    else:
+        return 2,'Found content' # tasks.models.HBTask.OK_STATUS
+
 
 def check_stored_status(obj):
-    if DJANGO:
-        status_checked = None
+    status_checked = None
+    newstatus = check_status(obj)[0]
+    print 'CHECK_STORED_STATUS : ',obj.hash,newstatus
 
-        print 'CHECK DB STATUS OF ',obj.hash
+    if DJANGO==False: # now to always try the remote
         stored = tasks.models.HBTask.objects.get(resulthash=obj.hash)
-
-        print 'Stored in database:',stored
-        if not stored:
-            newstatus = tasks.models.HBTask.NO_STATUS
-            # raise Exception('Not Stored {}'.format(obj.hash))
-        print 'Type of the db-stored thing: ',type(stored)
-        
-        if obj.content == []:
-            newstatus = tasks.models.HBTask.NO_STATUS
-
-        elif is_async ( obj.content ):
-            status_checked = get_status_async(obj.content).get('status')
-            # print 'STATUS CHECKED ',status_checked
-            newstatus = {
-                             'FAILURE':  tasks.models.HBTask.ERROR_STATUS,
-                             'SUCCESS':  tasks.models.HBTask.OK_STATUS,
-                             'PROGRESS': tasks.models.HBTask.PENDING_STATUS,
-                             'PENDING':  tasks.models.HBTask.PENDING_STATUS
-                            }.get(status_checked)
-        else:
-            newstatus = tasks.models.HBTask.OK_STATUS
-
         if not newstatus == stored.status:
-            print 'Change status of {} from {} to {}'.format(obj.hash,stored.status,newstatus)
             stored.status = newstatus
             stored.save()
 
         return newstatus,status_checked
-
-# @app.task(name='HbRunTask')
-# def run_task(task,hash,**kwargs):
-#     print 'RUN {} for {}'.format(task, hash)
-#     a =  chain( 
-#             task.s(**kwargs), 
-#             save_hbobject_content.s(hash))()
-#     print 'TASKID A ',a.task_id
-#     print 'PARENT A ',a.parent
-
+    
+    else:
+        if (newstatus==2):
+            url = base_url + '/finished/{}'.format(obj.hash)
+            r = requests.get(url)
+            print r.ok,r.status_code
+        return newstatus,status_checked
 
 
 class HbTask():
@@ -140,58 +100,37 @@ class HbTask():
     A task that takes zero or more HbObjects, 
     does something, and returns another HbObject.
     """
-
-
     def __init__(self,log=None,fromdb=False,**kwargs):
 
-        if fromdb:
-            self.fromdb = True
+        self.name = ''
+        self.version = ''
+        self.settings = Settings()
+        self.result = None
 
-            stored_task = tasks.models.HBTask.objects.get(resulthash=hash)
- 
-            self.runtask = current_app.tasks[stored_task.celery_taskname]
-            pars = json.loads(stored_task.parameters)
-            self.settings.get = pars
-             
-            self.name = stored_task.hb_taskname
-            self.log = logging.getLogger(self.name)
- 
-        else:
-            self.name = ''
-            self.version = ''
-            self.settings = Settings()
-            self.result = None
+        self.retry_wait = 10 # 10 sec default, wait for dependencies
 
-            # overload this define 
-            self.define()
+        # overload this define 
+        self.define()
 
-            # user short name if there is no long one
-            self.longname = getattr(self,'longname',self.name)
+        # user short name if there is no long one
+        self.longname = getattr(self,'longname',self.name)
 
-            # celery task
-            self.name = getattr(self,'name',self.longname.title().replace(' ',''))
-            self.log = logging.getLogger(self.name)
+        # celery task
+        self.name = getattr(self,'name',self.longname.title().replace(' ',''))
+        self.log = logging.getLogger(self.name)
 
-            # Set settings
-            try:
-                self.settings.set(**kwargs)
-            except NotValidError as e:
-                self.log.error('Settings not valid: {}'.format(e.msg))
-                
-            if self.settings.valid:
-                self.set_result()
+        # Set settings
+        try:
+            self.settings.set(**kwargs)
+        except NotValidError as e:
+            self.log.error('Settings not valid: {}'.format(e.msg))
+            
+        if self.settings.valid:
+            self.set_result()
 
-        # save_hbobject_content(self.signature, self.result['hash'])
-
-        # self.log.info('Save signature as result')
-        # self.result.content = self.signature
-        # self.result.save()
-
-
-    def run(self):
+    def runme(self):
         """ gives the thing that can be run: a signature
         """
-
         # What to do?
         if isinstance(self.runtask,celery.local.Proxy):
             runtask = self.runtask.si
@@ -199,36 +138,27 @@ class HbTask():
             runtask = self.runtask()
         else:
             self.log.error('The runtask should be a shared_task or something running quickly that returns an AsyncResult')
-
         # Settings
         settings = self.settings.getstr
         for i in self.dependencies:
             settings[i] = HbObject(self.settings.get[i]).content
-
         # Go
-        print 'MY TASK TO RUN ',runtask
-        print '     TYPE      ',type(runtask)
-        print 'MY SETTINGS ARE NOW ',settings
-
         return runtask(**settings)
-
 
     def define(self):
         """ TO BE OVERLOADED
         """
         pass
 
-    def execute(self,**kwargs):
+    def execute(self):
         """ TO BE OVERLOADED
         """
-        return none
+        pass
 
     def set_result(self):
         """ Based on the settings, compute the result hash and save an empty result file.
         """
-
         if self.settings.valid:
-
             # Create result log/hash
             if isinstance(self.result,HbObject):
                 result = self.result
@@ -242,10 +172,14 @@ class HbTask():
             # If new, save empty
             if not result.known:
                 self.log.info('Save an empty result: {}'.format(result))
+                
+                print 'INFO ',self.info
+                print 'CONT ',self.content
+
                 result.save()
             
             # Use shorthand version
-            self.result = result.typehash
+            self.result = str(result)
 
             if DJANGO:
                 self.log.info('SAVE TO DJANGO {}'.format(DJANGO))
@@ -264,9 +198,9 @@ class HbTask():
     def dependency_dict(self):
         return self.settings.dependency_dict
 
-    @property
-    def dependency_dictstr(self):
-        return self.settings.dependency_dictstr
+    # @property
+    # def dependency_dictstr(self):
+    #     return self.settings.dependency_dictstr
 
     @property
     def ready_to_go(self):
@@ -290,17 +224,19 @@ class HbTask():
         # return [r for r in self.dependencies if is_async(r)]
         return [d for d in self.dependency_dict.values() if is_async(HbObject(d).content)]
           
-    def submit_dependency_tree(self):
-        """ submit dependencies not yet pending
-        this may start a chain of triggered event, 
-        when several layers have still to be made.
-        """
-        for name,dep in self.dependency_dict.iteritems():
-            obj = HbObject(dep)
-            print 'Check dependency {} (status : {})'.format(name,obj.status)
-            print dep,type(dep)
-            if obj.status == 0:
-                T = HbTask(fromdb=dep['hash'])
+
+    def dependency_status(self):
+        out = {}
+        for par,d in self.dependency_dict.iteritems():
+
+            h = HbObject(d)
+
+            if h.known:
+                out[par] = h.status
+            else:
+                print 'Object {} was not available!'.format(str(h))
+                out[par] = ('ERROR_STATUS','Not available')
+        return out
 
     def submit(self,redo=False):
         """ Really do something here: wrap the specific 'execute'
@@ -312,9 +248,10 @@ class HbTask():
 
         # try if we already have this item
         # The task has already been submitted and saved 
-        resulthash = self.result['hash']
+        resulthash = str(self.result).split(':')[1]
 
         result = HbObject(hash=resulthash)
+
         if result.content and not redo:
             self.log.info('Result already found ({})'.format(resulthash))
             self.log.info('Progress : {}'.format(get_status_async(result.content)))
@@ -328,43 +265,22 @@ class HbTask():
             # All the arguments to the task: dependencies loaded, and settings            
             # self.log.info('_do_runtask is now : {}'.format(self._do_runtask))
             # Do the work and save it
-            print 'todo    : ',group(self.dependencies_todo)
-            print 'pending : ',group(self.dependencies_pending)
-            print 'runtask : ',self.runtask 
-            print 'save    : ',save_hbobject_content.s(resulthash)
 
-            self.submit_dependency_tree()
+            # if not self.ready_to_go:
+            #     raise Exception('Not all dependencies ready')
 
-            if not self.ready_to_go:
-                raise self.retry(exc=exc, countdown=10)
+            signature = chain(
+                    # check_and_wait.s(self.dependency_dict),
+                    self.runme(),
+                    save_hbobject_content.s(resulthash)
+                )
 
-
-            if self.fromdb:
-                # Settings
-                settings = self.settings.getstr
-                for i in self.dependencies:
-                    settings[i] = HbObject(self.settings.get[i]).content
-
-                signature = chain(
-                    Celery().send_task(self.runtask, **settings)
-                    )
-         
-
-            else:
-                signature = chain(
-                        # check_and_wait(self.dependency_dictstr),
-                        self.run(),
-                        save_hbobject_content.s(resulthash)
-                    )
-
-                print signature
-                result.content = signature.delay()
+            result.content = signature.delay()
 
             if DJANGO:
                 self.save_run(result.content.task_id)
 
             self.log.info('Submitted {}'.format(resulthash))
-            print 'RESULT is now temporarily: {}'.format(result)
             # for the time being, we store the complete chain as the result
             result.save(status=1)
 
@@ -373,7 +289,7 @@ class HbTask():
 
         def save_task(self):
             stored_task, isnew = tasks.models.HBTask.objects.get_or_create(
-                resulthash = self.result['hash'],
+                resulthash = self.result.split(':')[1]
             )
             if isnew:
                 self.log.info('SAVE TASK TO DATABASE')
@@ -389,9 +305,9 @@ class HbTask():
 
         def save_run(self,task_id):
             try:
-                stored_task = tasks.models.HBTask.objects.get(resulthash=self.result['hash'])
+                stored_task = tasks.models.HBTask.objects.get(resulthash= self.result.split(':')[1])
             except :
-                raise Exception('Not found stored task with hash='.format(self.result['hash']))
+                raise Exception('Not found stored task with result='.format( self.result ))
 
 
             stored_run = tasks.models.HBTaskRun.objects.create(
@@ -410,7 +326,7 @@ class HbTask():
                  'version':self.version,
                  'settings':self.settings.getstr,
                  'dependencies':self.settings.dependency_dict,
-                 'result': self.result})
+                 'result': str(self.result)})
 
     @property
     def json(self):

@@ -1,21 +1,145 @@
-import logging
 
-logging.basicConfig(level=logging.INFO,
-    format='%(asctime)s - %(name)15s - %(levelname)s - %(message)s')
-logger = logging.getLogger('Test')
-formatter = logging.Formatter()
+import os, django
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "proc.settings")
+django.setup()
 
-from tasks.experts.tasks import *
+import shutil
+import requests
+from pprint import pprint
+from tasks import models
+from time import sleep
 
-a1 = Add(a=2,b=3)
-a2 = Add(a=1,b=1)
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
-b = Add2(a=a1,b=a2)
+def print_progress(h):
+    print bcolors.HEADER + h + bcolors.ENDC
 
-b.submit()
+def print_ok(h):
+    print bcolors.OKBLUE + h + bcolors.ENDC
 
-from tasks.experts.tools.hbobject import HbObject as ho
+def print_response(h):
+    print bcolors.OKGREEN 
+    pprint(h)
+    print bcolors.ENDC
 
-h1 = ho(a1.result)
-h2 = ho(a2.result)
-h = ho(b.result)
+def print_error(h):
+    print bcolors.FAIL + h + bcolors.ENDC
+
+
+def req(url,*pars):
+    try:
+        if pars:
+            url = url.format(*pars)
+        'REQUEST : ',url
+        r = requests.get(url)
+        if r.ok:
+            return r.json()
+        else:
+            print_error('ERROR : no response')
+            print_response('Status {}'.format(r.status))
+            return None
+    except Exception as e:
+        print_error('Error : '+url)
+        print_error(e)
+
+def check_status(hh,wait=False):
+    print 'Check status:'
+    ok = False
+    while not ok:
+        url = 'http://127.0.0.1:8000/available/'
+        url = url + '?h=' + '&h='.join(hh)
+
+        # print_ok ('URL : '+url)
+        s= req(url)
+        # print s
+        for h in hh:
+            print_progress('  {} : {}'.format(h,s[h]))
+        print 
+        ok = all([i==True for i in s.values()])
+        # print s.values()
+        if not wait:
+            return
+        sleep(0.5)
+
+
+def cleanup():
+
+    print_progress('Clean up')
+    # remove from database
+    for t in models.HBTask.objects.all():
+         t.delete()
+    for t in models.Waiting.objects.all():
+         t.delete()
+
+    # remove physically
+    if os.path.exists('hbhash'):
+        shutil.rmtree('hbhash')
+
+
+def setup():
+
+    url = 'http://127.0.0.1:8000/check/Add/?a={}&b={}'
+    r1 = req(url,1,2)
+    import sys
+    sys.exit()
+    r2 = req(url,2,3)
+
+    h1 = r1['result'].split(':')[1]
+    h2 = r2['result'].split(':')[1]
+
+    print 'add 1+2 :', h1
+    print 'add 2+3 :', h2
+
+    # Thirs step: add the two results
+    r3 = req('http://127.0.0.1:8000/check/Add2/?a={}&b={}',h1,h2)
+    h3 = r3['result'].split(':')[1]
+    print '\nadd two results :', h3
+
+    check_status([h1,h2,h3])
+    return h1,h2,h3
+
+
+def main():
+    cleanup()
+    h1,h2,h3 = setup()
+    #  Not yet available (nothing is)
+    print_progress('\nAvailablility of third step?')
+    print_response(req('http://127.0.0.1:8000/available/?h={}',h3))
+    check_status([h1,h2,h3])
+
+
+    # Now run one
+    r1 = req('http://127.0.0.1:8000/run/{}',h1)
+    check_status([h1],wait=True)
+
+    print_progress('\ndependency status of third:')
+    print_response(req('http://127.0.0.1:8000/status/{}',h3)['dependency_status'])
+
+# print '\nNow wait two seconds'
+# for i in range(5):
+#     sleep(0.5)
+#     check_status(h1,h2,h3)
+
+
+    print_progress('\nTry to run third step:')
+    r5 = req('http://127.0.0.1:8000/run/{}',h3)
+    print_response(r5)
+
+    print_progress ('\nNow wait for all results')
+    ok = check_status([h1,h2,h3])
+
+# print '\nTry to run third step: (again)'
+# r5 = req(url,h3)
+# pprint(r5)
+
+if __name__=="__main__":
+    main()
+

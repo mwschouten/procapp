@@ -76,6 +76,12 @@ class HbLog():
     def data(self):
         return [l['msg'] for l in self.handler.data if l['level'] > logging.INFO]
 
+    def date_first(self):
+        return self.handler.data[0]['time']
+
+    def date_last(self):
+        return self.handler.data[-1]['time']
+
     # Show the log
     def show(self):
         frmt = {logging.DEBUG: '   {0[level]} : {0[msg]}',

@@ -13,6 +13,9 @@ from tasks.experts.tools.hbtask import check_stored_status
 import tasks.models as models
 import json
 import time
+import datetime
+
+import sys,traceback
 
 def check(request,task_name):
     """ check the settings of a HbTask
@@ -35,7 +38,6 @@ def check(request,task_name):
     """
     try:
         todo = getattr(tasks,task_name,None)
-        # print 'TASKS NOW :',tasks
     except KeyError:
         return JsonResponse(
             {'error':'This {} is not a known task'.format(taskname)})
@@ -51,15 +53,9 @@ def check(request,task_name):
     action = todo(**kwargs)
     if not action.settings.valid:
         return JsonResponse(
-            {'error':'Invalid settings: {}'.format(action.settings.get)})
+            {'error':'Invalid settings: {}'.format(action.settings.errors)})
 
     action.set_result()
-    # action.run()
-    # print action.result
-    # return JsonResponse({'ok':True,
-    #                      'taskname':task_name,
-    #                      'settings':action.settings.get,
-    #                      'result':action.result})
     return JsonResponse(action.description)
 
 
@@ -91,6 +87,7 @@ def available(request):
         # if True:
             stored = models.HBTask.objects.get(resulthash=h)
 
+            print 'Look for ',h
             obj = HbObject(hash=h)
 
             # check if database status is still correct
@@ -105,22 +102,53 @@ def available(request):
             else:
                 thisone = True
 
-        except:
+        except Exception as e:
             thisone = False
+            print '\nCAUGHT EXCEPTION\n',e
+            print '-'*60
+            traceback.print_exc(file=sys.stdout)
+            print '-'*60
+
         available.update({h:thisone})
     return JsonResponse(available)
+
+
+def status(request,resulthash):
+
+    # Get from database
+    try:
+        stored_task = models.HBTask.objects.get(resulthash=resulthash)
+    except Exception:
+        return JsonResponse({'Error':'Could not load task'})
+    pars = json.loads(stored_task.parameters)
+
+    # Load the task with the parameters
+    todo = getattr(tasks,stored_task.hb_taskname,None)
+    T = todo(**pars)
+
+    # Check the result    
+    R = HbObject(T.result)
+
+    t0 = datetime.datetime.fromtimestamp(R.log.date_first()).strftime('%Y-%m-%d %H:%M:%S')
+    t1 = datetime.datetime.fromtimestamp(R.log.date_last()).strftime('%Y-%m-%d %H:%M:%S')
+    out = { 'description'   : T.description,
+            'log'           : {'text':R.log.data,'dates':[t0,t1]},
+            'dependency_status'  : T.dependency_status()
+        }
+
+    return JsonResponse(out)
 
 
 
 def run(request, resulthash):
     """ run what it takes to get me this hash
     """
-
     try:
         stored = models.HBTask.objects.get(resulthash=resulthash)
     except:
+        stored = None
         thisone = {'Error', 'not found in database'}
-
+    
     # Finished, and reported back
     if stored.status == models.HBTask.OK_STATUS:
         thisone = True
@@ -140,25 +168,56 @@ def run(request, resulthash):
         print 'Now status      : ',stored.status
         print 'Now submit task : ',stored.celery_taskname
 
-        # to submit celery task directly
-        # todo = getattr(tasks,stored.celery_taskname)
-        # celery_result = todo.delay(**json.loads(stored.parameters))
-        # print 'Sent off celery : ',celery_result.task_id
-        # thisone = get_status_async(celery_result)
-
         # to submit hb task
         todo = getattr(tasks,stored.hb_taskname)
         # celery_result = todo.delay(**json.loads(stored.parameters))
         parameters = json.loads(stored.parameters)
-        print 'PARAMETERS ',parameters
+    
         action = todo(**parameters)
-        action.submit()
-        time.sleep(0.5)
-        obj = HbObject(hash=resulthash)
-        status,fullstatus = check_stored_status(obj)
-        thisone = fullstatus or True 
-        print 'OK ? ',action.result
 
-    print 'resulthash : ',resulthash
-    print 'thisone : ',thisone
+        if not action.ready_to_go:
+            thisone = {'Warning':'Not all dependencies are met',
+                        'dependency_status':action.dependency_status()}
+
+            # Add me as waiting for a few
+            todo = [d.split(':')[1] for d in action.dependencies_todo]
+            dep = models.HBTask.objects.filter(resulthash__in=todo)
+            for d in dep:
+                w,isnew = models.Waiting.objects.get_or_create(todo=stored,dependency=d)
+                print 'Created ? ',w,isnew
+                # submit dependency to run
+                run(None,resulthash=d.resulthash)
+        else:
+            action.submit()
+            time.sleep(0.5)
+            obj = HbObject(hash=resulthash)
+            status,fullstatus = check_stored_status(obj)
+            thisone = fullstatus or True 
+
     return JsonResponse({resulthash:thisone})
+    # return JsonResponse(thisone)
+
+
+def finished(request, resulthash):
+    """ mark as finished, remove waiting for this one, start the waiting if it can
+    """
+    try:
+        stored = models.HBTask.objects.get(resulthash=resulthash)
+        stored.status = 2
+        stored.save()
+        thisone = 'Ok'
+    except:
+        thisone = {'Error':'not found in database'}
+        
+    # Check if anyone was waiting for thisone to finish:
+    waiting_for_me = models.Waiting.objects.filter(dependency=stored)
+
+    for w in waiting_for_me:       
+        #  Submit the task waiting if there was only one dependency left
+        if w.todo.waiting_set.count() == 1:
+            run(None, resulthash=w.todo.resulthash)
+        # remove this dependency
+        w.delete()
+
+    return JsonResponse({resulthash:thisone})
+

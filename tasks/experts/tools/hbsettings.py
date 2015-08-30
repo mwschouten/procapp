@@ -60,10 +60,12 @@ class Setting:
         # check hbobject type
         if self.type and isinstance(self.type,HbObject):
             try:
-                assert(self.type.type == testval['type'])
+                assert( type(testval) in [str,unicode] and testval.find(':')>0)
+                tt,hh = testval.split(':')
+                assert(len(hh)==32)
+                assert(self.type.type == tt)
             except Exception, e:
                 logging.error(e, exc_info=True)
-                print 'TESTVAL ',testval,type(testval)
                 logging.error('expected HbObject {}, got {}'.format(self.type.type,testval))
                 return False
         # or try to cast to requested type
@@ -74,22 +76,20 @@ class Setting:
                 logging.error('cannot cast this {} to {}'.format(testval, self.type))
                 logging.error(e, exc_info=True)
                 return False
-
-        print 'Tested ',testval
         return True
 
     def set(self, val):
         if isinstance(val, HbObject):
-            val = val.typehash
+            val = str(val)
         elif ishash(val):
             # TODO: gettype: read only the type from hbobject instead of all data?
             # TODO: alternatively, get type from database.
-            val = HbObject(hash=val).typehash
+            try:
+                val = str(HbObject(hash=val))
+            except Exception as e:
+                raise NotValidError(val,self.name,e.message)
 
-        print 'self  : ',self.type
-        print 'val   : ',val
         self.value = self.validated(val)
-        print 'SET VALUE ({}) : {}'.format(self.name,self.value,type(self.value))
 
     def validated(self,testval):
         # if True:
@@ -129,9 +129,13 @@ class Settings:
         """ Set one or more parameters
         e.g. set({'aap':'piet', 'banaan':'geel'}
         """
+        self.errors = []
         for k, v in kwargs.iteritems():
             if k in self.settings.keys():
-                self.settings[k].set(v)
+                try:
+                    self.settings[k].set(v)
+                except Exception as e:
+                    self.errors.append(e.msg)
             else:
                 logging.error('{} is not a setting'.format(k))
 
@@ -141,8 +145,8 @@ class Settings:
         Show currently set settings (also inferred from default)
         -> normal key:value dict with whatever it is
         """
-        for k,v in self.settings.iteritems():
-            print k,v,type(v)
+        # for k,v in self.settings.iteritems():
+        #     print k,v,type(v)
         return {k: v.value for k, v in self.settings.iteritems()}
 
     @property
@@ -171,8 +175,8 @@ class Settings:
         return all(ok)
 
 class NotValidError(Exception):
-    def __init__(self, value, parameter):
-        self.msg = 'ERROR: "{}" is not a valid setting for "{}"'.format(value, parameter)
+    def __init__(self, value, parameter,reason=None):
+        self.msg = '{} is not a valid setting for {} ({})'.format(value, parameter, reason)
 
 
 if __name__=='__main__':

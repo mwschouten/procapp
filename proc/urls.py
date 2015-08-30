@@ -24,4 +24,5 @@ urlpatterns = [
     url(r'^run/(?P<resulthash>.+?)/', views.run),
     url(r'^status/(?P<resulthash>.+?)/', views.status),
     url(r'^finished/(?P<resulthash>.+?)/', views.finished),
+    url(r'^info/(?P<resulthash>.+?)/', views.info),
 ]

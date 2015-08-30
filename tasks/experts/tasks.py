@@ -64,7 +64,7 @@ def add(a,b):
     b = float(b)
     time.sleep(b)
     print 'Done ',b,' return ',a+b
-    return a+b
+    return {'content':a+b,'info':'Computed {} + {} = {}'.format(a,b,a+b)}
 
 
 class Add2(HbTask):

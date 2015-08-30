@@ -45,7 +45,7 @@ class HbObject():
             self.log = HbLog()
             self.log.head('HbObject type: {0:s}'.format(self.type))
             self.content = []
-            self.info = {}
+            self.info = None
 
     def __call__(self,*args,**kwargs):
         """ Make an object of my own type, with new settings:
@@ -129,16 +129,19 @@ class HbObject():
         dirpath = os.path.join(directory, 'hbhash')
         make_sure_path_exists(dirpath)
         filename = os.path.join(dirpath, self.hash + '.p')
+        tempfile = filename+'.temp'
 
-        with open(filename, 'wb') as fid:
+        with open(tempfile, 'wb') as fid:
             pickle.dump(self.type, fid)
             pickle.dump(self.log.handler.data, fid)
             pickle.dump(self.info, fid)
             pickle.dump(self.content, fid, -1)
+        os.rename(tempfile,filename)
 
-        # print 'HBOBJECT NOW SAVED {}'.format(self.hash)
-        # self.log.show()
-        # print 'HBOBJECT CONTENT   {}'.format(self.content)
+        print 'HBOBJECT NOW SAVED {}'.format(self.hash)
+        self.log.show()
+        print 'HBOBJECT CONTENT   {}'.format(self.content)
+        print 'HBOBJECT INFO      {}'.format(self.info)
         return
 
 
@@ -163,8 +166,14 @@ class HbObject():
             self.type = pickle.load(fid)
             self.log = HbLog()
             self.log.handler.data = pickle.load(fid)
+            print 'HBOBJECT NOW LOADED {}'.format(self.hash)
+            self.log.show()
             self.info = pickle.load(fid)
+            print 'HBOBJECT INFO      {}'.format(self.info)
             self.content = pickle.load(fid)
+            print 'HBOBJECT CONTENT   {}'.format(self.content)
+
+
         return True
 
 

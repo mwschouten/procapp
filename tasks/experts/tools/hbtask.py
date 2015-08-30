@@ -39,8 +39,19 @@ except:
 @shared_task(name='SaveContent', ignore_result=True)
 def save_hbobject_content(content,hash):
     print 'SAVE {} in {}'.format(content,hash)
+
+    if isinstance(content,dict) and content.has_key('info') and content.has_key('content'):
+        info = content['info']
+        content = content['content']
+    else:
+        info=None
+
     obj = HbObject(hash=hash)
     obj.log.info('Replace with finished content')
+
+    if info is not None:
+        obj.info = info
+
     obj.content = content
     obj.save()
     print 'Saved {}'.format(hash)
@@ -173,8 +184,8 @@ class HbTask():
             if not result.known:
                 self.log.info('Save an empty result: {}'.format(result))
                 
-                print 'INFO ',self.info
-                print 'CONT ',self.content
+                print 'INFO ',self.result.info
+                print 'CONT ',self.result.content
 
                 result.save()
             

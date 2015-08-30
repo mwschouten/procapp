@@ -221,3 +221,10 @@ def finished(request, resulthash):
 
     return JsonResponse({resulthash:thisone})
 
+
+def info(request, resulthash):
+    """ read info
+    """
+    h = HbObject(resulthash)
+    return JsonResponse({resulthash:h.info})    
+

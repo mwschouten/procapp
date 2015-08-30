@@ -88,8 +88,6 @@ def setup():
 
     url = 'http://127.0.0.1:8000/check/Add/?a={}&b={}'
     r1 = req(url,1,2)
-    import sys
-    sys.exit()
     r2 = req(url,2,3)
 
     h1 = r1['result'].split(':')[1]
@@ -134,7 +132,7 @@ def main():
     print_response(r5)
 
     print_progress ('\nNow wait for all results')
-    ok = check_status([h1,h2,h3])
+    ok = check_status([h1,h2,h3],wait=True)
 
 # print '\nTry to run third step: (again)'
 # r5 = req(url,h3)

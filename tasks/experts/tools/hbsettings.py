@@ -33,11 +33,17 @@ class Setting:
                  default=None,
                  mandatory=True,
                  validate=None,
-                 type=lambda x:x):
+                 type=None):
 
         assert isinstance(name, str)
         self.name = name
         self.type = type
+
+        if type is None:
+            if default is None:
+                self.type = lambda x:x
+            else:
+                self.type = __builtins__['type'](default)
 
         if isinstance((type),HbObject):
             default = None
@@ -54,6 +60,15 @@ class Setting:
     def __unicode__(self):
         return 'Setting {} [{}]'.format(self.name, self.default)
 
+    @property
+    def description(self):
+        """ description of the setting
+        """
+        if isinstance(self.type,HbObject):
+            tp = self.type.type
+        else:
+            tp = self.type
+        return {'name':self.name,'type':str(tp),'mandatory':self.mandatory,'default':str(self.default)}
 
     def validate(self, testval):
         """ Validate a single setting w.r.t. type etc. """
@@ -168,6 +183,22 @@ class Settings:
     @property
     def mandatory(self):
         return {name:s for name,s in self.settings.iteritems() if s.mandatory}
+
+    @property
+    def description(self):
+        """ description of the settings
+        """
+        out = {}
+        for name,sett in self.settings.iteritems():
+            d = {k:v for k,v in sett.description.iteritems() if k is not 'name'}
+            out[name] = d
+        return out
+
+        if isinstance(self.type,HbObject):
+            tp = self.type.type
+        else:
+            tp = self.type
+        return {'name':self.name,'type':str(tp),'mandatory':self.mandatory,'default':self.default}
 
     @property
     def valid(self):

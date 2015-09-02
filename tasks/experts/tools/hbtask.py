@@ -116,6 +116,7 @@ class HbTask():
         self.name = ''
         self.version = ''
         self.settings = Settings()
+        self.info = None
         self.result = None
 
         self.retry_wait = 10 # 10 sec default, wait for dependencies
@@ -183,9 +184,8 @@ class HbTask():
             # If new, save empty
             if not result.known:
                 self.log.info('Save an empty result: {}'.format(result))
-                
-                print 'INFO ',self.result.info
-                print 'CONT ',self.result.content
+                print 'INFO ',result.info
+                print 'CONT ',result.content
 
                 result.save()
             
@@ -306,7 +306,7 @@ class HbTask():
                 self.log.info('SAVE TASK TO DATABASE')
                 stored_task.hb_taskname = self.name
                 stored_task.celery_taskname = self.runtask.name
-                stored_task.parameters = json.dumps(self.settings.get)
+                stored_task.parameters = json.dumps(self.settings.getstr)
                 stored_task.status = tasks.models.HBTask.NO_STATUS
                 stored_task.save()
                 self.log.info('SAVED WITH ID {}'.format(stored_task.id))
@@ -331,6 +331,20 @@ class HbTask():
                 stored_task.save()
 
 
+    @property    
+    def api(self):
+        
+        resulttype = getattr(self.result,'type',None)
+        if resulttype is None:
+            resulttype = self.result.split(':')[0]
+
+        return ({'name':self.name,
+                 'version':self.version,
+                 'settings':self.settings.getstr,
+                 'dependencies':self.settings.description,
+                 'result': resulttype})
+
+
     @property
     def description(self):
         return ({'name':self.name,
@@ -344,15 +358,15 @@ class HbTask():
         return json.dumps(self.description)
 
 
-# #    @celery.task
+
+
+#     @celery.task
 #     def execute(self):
 #         """
 #         Perform the action through celery queue handlers
 #         Workers are activated using:    celery -A tasks worker --loglevel=info
-
 #         During the execution, we produce the content carried in
 #         self.result.content
-
 #         """
 #         print '----------------------------------------'
 #         print 'Now executing the HbTask'

@@ -19,10 +19,11 @@ from tasks import views
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^check/(?P<task_name>.+?)/', views.check),
+    url(r'^options/', views.options),
     url(r'^available/', views.available),
+    url(r'^check/(?P<task_name>.+?)/', views.check),
     url(r'^run/(?P<resulthash>.+?)/', views.run),
+    url(r'^info/(?P<resulthash>.+?)/', views.info),
     url(r'^status/(?P<resulthash>.+?)/', views.status),
     url(r'^finished/(?P<resulthash>.+?)/', views.finished),
-    url(r'^info/(?P<resulthash>.+?)/', views.info),
 ]

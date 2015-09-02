@@ -16,6 +16,22 @@ import time
 import datetime
 
 import sys,traceback
+import inspect
+
+
+def options(request):
+    """ Get list of all the available tasks and their api 
+    """
+    out = {}
+    for i in dir(tasks): 
+        t = getattr(tasks,i)
+        if i is not 'HbTask' and inspect.isclass(t) and issubclass(t,tasks.HbTask):
+            print 'Now : ',i
+            out[i] = t().api
+    return JsonResponse(out)
+
+
+
 
 def check(request,task_name):
     """ check the settings of a HbTask

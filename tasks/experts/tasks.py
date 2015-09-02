@@ -47,7 +47,7 @@ def submit_pieces(mytask,settings):
              )
     return g
 
-# @shared_task(name='SubmitDensDist2',bind=True,track_started=True)
+@shared_task(name='SubmitDensDist2',bind=True,track_started=True)
 # @app.task(name='SubmitDensDist2',bind=True,track_started=True)
 def submit_pieces_test(mytask, setup, queue):
     print 'SETUP : {}'.format(setup)     
@@ -107,8 +107,8 @@ class DensifySetup(HbTask):
         self.result = HbObject('setupdata')
         
         # Define settings
-        self.settings.add('parent')
-        self.settings.add('parameters')
+        self.settings.add('parent',type=str)
+        self.settings.add('parameters',type=str)
         self.runtask = setup_pieces
 
 
@@ -119,9 +119,9 @@ class DensifyDistribute(HbTask):
         self.longname = 'Submit densify distributed'
         self.name = 'SubmitDensDist'
         self.version = '0.1'
-        self.result = 'data'
+        self.result = HbObject('submitted')
         # Define settings
-        self.settings.add('setup',HbObject('setupdata'))
+        self.settings.add('setup',type=HbObject('setupdata'))
         self.settings.add('queue',default='celery')
         self.runtask = submit_pieces_test
 

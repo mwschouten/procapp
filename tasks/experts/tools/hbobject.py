@@ -35,6 +35,8 @@ class HbObject():
             elif len(type)==32:
                 hash = type
                 type=''
+
+        print 'TYPE',type
         # load with : HbObject(hash='b123b11f2342141a')
         if hash:
             self.load(hash=hash)

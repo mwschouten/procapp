@@ -16,6 +16,19 @@ import time
 import datetime
 
 import sys,traceback
+import inspect
+
+def options(request):
+    out = {}
+    for tname in dir(tasks):
+        t = getattr(tasks,tname)
+        # print tname, t, type(t)
+        # select the hbtask clases, but not hbtask (base) itself
+        if inspect.isclass(t) and issubclass(t,tasks.HbTask) and t is not tasks.HbTask:
+            out[tname] = t().api
+
+    return JsonResponse(out)
+
 
 def check(request,task_name):
     """ check the settings of a HbTask

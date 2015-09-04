@@ -1,0 +1,28 @@
+
+
+
+<h3>My locations</h3>
+<div class="row" ng-controller='MapLocationsCtrl'>
+  <ul>
+    <li ng-repeat="l in markers" 
+    inline-edit="l.name" on-save="updateLocation(l)" on-cancel="cancelEdit(l.name)" on-delete="deleteLocation(l)"></li>
+  </ul>
+</div >
+
+<hr>
+<h3>TSX catalogue</h3>
+
+<div ng-controller='CatalogueCtrl'>
+	Last updated: {{date_of_catalogue.updated}} ({{date_of_catalogue.days_ago}} days ago)
+
+	<div class="row">
+		<celery-task-control fnc="updateCat" running="running" name="name">jaja</celery-task-control>
+	</div>
+
+</div>
+<hr>
+<!-- <leaflet defaults="defaults" height="480px" width="640px"  geojson="geojson" ></leaflet> -->
+
+<!-- {{layers}} -->
+<!-- {{images}} -->
+

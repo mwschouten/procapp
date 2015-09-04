@@ -1,0 +1,10 @@
+<div>
+  <input type="text" on-enter="save()" on-esc="cancel()" ng-model="model" ng-show="editMode" placeholder='Not saved yet...'>
+  <button ng-click="cancel()" ng-show="editMode"><span class="glyphicon glyphicon-remove"></span></button>
+  <button ng-click="save()"   ng-show="editMode"><span class="glyphicon glyphicon-ok">    </span></button>
+  <button ng-click="delete()" ng-show="editMode"><span class="glyphicon glyphicon-trash"> </span></button>
+  <span ng-mouseenter="showEdit = true" ng-mouseleave="showEdit = false">
+    <span ng-hide="editMode" ng-click="edit()">{{model}}</span>
+    <a ng-show="showEdit" ng-click="edit()"><span class="glyphicon glyphicon-pencil"></span></a>
+  </span>
+</div>

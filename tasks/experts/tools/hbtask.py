@@ -139,6 +139,7 @@ class HbTask():
         if self.settings.valid:
             self.set_result()
 
+
     def runme(self):
         """ gives the thing that can be run: a signature
         """
@@ -184,8 +185,9 @@ class HbTask():
             if not result.known:
                 self.log.info('Save an empty result: {}'.format(result))
                 
-                print 'INFO ',self.result.info
-                print 'CONT ',self.result.content
+                print 'RESULT : ',result
+                print 'INFO ',result.info
+                print 'CONT ',result.content
 
                 result.save()
             
@@ -305,7 +307,7 @@ class HbTask():
             if isnew:
                 self.log.info('SAVE TASK TO DATABASE')
                 stored_task.hb_taskname = self.name
-                stored_task.celery_taskname = self.runtask.name
+                stored_task.celery_taskname = getattr(self.runtask,'name','')
                 stored_task.parameters = json.dumps(self.settings.get)
                 stored_task.status = tasks.models.HBTask.NO_STATUS
                 stored_task.save()
@@ -338,6 +340,18 @@ class HbTask():
                  'settings':self.settings.getstr,
                  'dependencies':self.settings.dependency_dict,
                  'result': str(self.result)})
+
+    @property
+    def api(self):
+        # print '\nTASK NAME IS ', self.name        
+        # print 'THE RESULT WILL BE :',self.result
+        # print 'THE RESULT WILL BE :',type(self.result)
+       return {'name':self.name,
+                 'longname':self.longname,
+                 'version':self.version,
+                 'settings':self.settings.api,
+                 'dependencies':self.settings.dependencies,
+                 'result': self.result.type}
 
     @property
     def json(self):

@@ -1,4 +1,4 @@
-# tasks expert
+7# tasks expert
 # from tasks.models import *
 
 __author__ = 'mathijs'
@@ -55,14 +55,19 @@ def submit_pieces_test(mytask, setup, queue):
     
 
 
-@shared_task(name='add')
+@shared_task(name='add', bind=True)
 # @app.task(name='add')
-def add(a,b):
+def add(mytask, a,b):
     print 'a',a,type(a)
     print 'b',b,type(b)
     a = float(a)
     b = float(b)
-    time.sleep(b)
+    print 'My id now: {}'.format(mytask.request.id)
+    for i in range(int(b)):
+        time.sleep(1)
+        mytask.update_state(state='PROGRESS',meta={'current':i,'total':b})
+        print '......Updated status {}/{}'.format(i,b)
+
     print 'Done ',b,' return ',a+b
     return {'content':a+b,'info':'Computed {} + {} = {}'.format(a,b,a+b)}
 
@@ -107,8 +112,8 @@ class DensifySetup(HbTask):
         self.result = HbObject('setupdata')
         
         # Define settings
-        self.settings.add('parent')
-        self.settings.add('parameters')
+        self.settings.add('parent',type=HbObject('pointset'))
+        self.settings.add('parameters',type=str)
         self.runtask = setup_pieces
 
 
@@ -119,9 +124,9 @@ class DensifyDistribute(HbTask):
         self.longname = 'Submit densify distributed'
         self.name = 'SubmitDensDist'
         self.version = '0.1'
-        self.result = 'data'
+        self.result = HbObject('data')
         # Define settings
-        self.settings.add('setup',HbObject('setupdata'))
+        self.settings.add('setup',type=HbObject('setupdata'))
         self.settings.add('queue',default='celery')
         self.runtask = submit_pieces_test
 

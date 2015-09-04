@@ -54,6 +54,21 @@ class Setting:
     def __unicode__(self):
         return 'Setting {} [{}]'.format(self.name, self.default)
 
+    @property
+    def api(self):
+        """ describes what is expected and defaulted
+        """
+        print 'name ',self.name
+        print 'default ',self.default
+        print 'type ',self.type
+        if isinstance(self.type,HbObject):
+            t = self.type.type
+            # d = self.
+        elif self.default:
+            t = str(type(self.default))
+        else:
+            t = str(self.type)
+        return {'default':str(self.default), 'mandatory':self.mandatory, 'type':t}
 
     def validate(self, testval):
         """ Validate a single setting w.r.t. type etc. """
@@ -173,6 +188,11 @@ class Settings:
     def valid(self):
         ok = [v.value for v in self.settings.values() if v.mandatory]
         return all(ok)
+
+    @property
+    def api(self):
+        return {k: v.api for k,v in self.settings.iteritems()}
+
 
 class NotValidError(Exception):
     def __init__(self, value, parameter,reason=None):

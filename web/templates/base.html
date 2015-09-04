@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+
+
+{% load staticfiles %}
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Processing Center</title>
+    <meta name="author" content="MWS">
+    <link href="{% static 'base/lib/bootstrap/css/bootstrap.css' %}" rel="stylesheet">
+
+    {% block add_css %}
+    {% endblock %}
+</head>
+
+{% block title %}
+{% endblock %}
+
+{% block header %}
+<div id="mainheader" class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid" style="">
+
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="">Processing Center</a>
+        </div>
+
+        {% if user.is_authenticated %}
+        <ul class="nav navbar-nav">
+            <li><a href="#start">Start</a> </li>
+            <!-- <li><a href="#reports">Reports</a> </li> -->
+            <!-- <li><a href="#frames">Frames</a></li> -->
+            <!-- <li><a href="#notifications">Notifications</a></li> -->
+            <!-- <li><a href="#dashboard">Dashboard</a></li> -->
+        </ul>
+
+        <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a>
+                        <span class="glyphicon glyphicon-user"> {{ user.username }}</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'django.contrib.auth.views.logout' %}">
+                        <span class="glyphicon glyphicon-log-out">&nbsp;</span>
+                    </a>
+                </li>
+        </ul>
+
+        {% else %}
+
+        <ul class="nav navbar-nav navbar-right">
+            <li>
+                <a href="{% url 'django.contrib.auth.views.login' %}"> Log in</a>
+            </li>
+        </ul>
+        {% endif %}
+
+
+    </div>
+</div>
+{% endblock %}
+
+
+{% block all_content %}
+    <div class="container" style="padding-top: 60px">
+        {% block content %}
+        <!-- This is replaced by index.html-->
+        {% endblock %}
+    </div>
+{% endblock %}
+
+<script src="{% static 'base/lib/angular/angular.js' %}"></script>
+<script src="{% static 'base/lib/angular/angular-resource.js' %}"></script>
+<script src="{% static 'base/lib/angular/angular-cookies.js' %}"></script>
+<script src="{% static 'base/lib/angular/angular-route.js' %}"></script>
+
+{% block add_scripts %}
+<!-- This is replaced by index.html-->
+{% endblock %}
+
+
+</body>
+</html>

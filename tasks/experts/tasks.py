@@ -76,7 +76,7 @@ class Add2(HbTask):
 
     def define(self):
         # Name, result
-        self.longname = 'Add two numbers'
+        self.longname = 'Add two stored numbers'
         self.name = 'Add2'
         self.version = '0.1'
         self.result = HbObject('data')

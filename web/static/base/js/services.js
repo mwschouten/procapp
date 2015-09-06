@@ -75,16 +75,30 @@ app.service('dataService', function ($http, $rootScope) {
 
 app.service('procService', function ($http) {
     this.status = 'Probeer eens wat';
-    this.requestOptions =  function(par){
-            console.log('Do requestoptions',par)
+    this.requestOptions =  function(){
+            console.log('Do request options')
             return $http({
                 url:  "/api/options/",
                 method: "GET",
             }).success(function(jsonData){
                 // make results available
                 console.log('Succesfully queried options');
-                console.log(jsonData)
                 this.options = jsonData
+            })
+    }
+
+    this.getAll = function(what){
+            console.log('Set to make ',what)
+            this.result=[]
+            return $http({
+                url:  "/api/results/",
+                method: "GET",
+                params: {resulttype:what}
+            }).success(function(jsonData){
+                // make results available
+                console.log('Succesfully queried all results for type '+what);
+                console.log(jsonData)
+                this.result = jsonData
             })
     }
 

@@ -1,14 +1,110 @@
-<!-- 
+<!--
     <leaflet 
     	center="amsterdam" controls="controls" bounds="bounds"
    	 	layers="layers"  height="500px" width="100%"
 		geojson="geojson">
     </leaflet>
+ -->
+
+<!--     The dnd-draggable directive makes an element draggable and will
+         transfer the object that was assigned to it. If an element was
+         dragged away, you have to remove it from the original list
+         yourself using the dnd-moved attribute 
+         -->
+<!-- 
+<h2>Probeer</h2>
+<h4>models : {{models}}</h4>
+ <ul dnd-list="list">
+    <li ng-repeat="item in list"
+        dnd-draggable="item"
+        dnd-moved="list.splice($index, 1)"
+        dnd-effect-allowed="move"
+        dnd-selected="models.selected = item"
+        ng-class="{'selected': models.selected === item}"
+        >
+        {{item.label}}
+    </li>
+</ul>
+<h4>list : {{list}}</h4>
+ -->
+
+<style>
+	.lvl-over {
+		/* applied to a drop target when a draggable object is over it */
+		border: 2px dashed black !important;
+	}
+
+	.lvl-target {
+		/* 
+		applied to all drop targets when a drag operation begins 
+		removed when the drag operation ends
+		used to indicate drop targets on a page 
+		*/
+		background-color: #ddd;
+		opacity: .5;
+	}
+
+	[draggable] {
+		/* not applied by the directive, but useful to indicate a draggable element */
+		-moz-user-select: none;
+		-khtml-user-select: none;
+		-webkit-user-select: none;
+		user-select: none;
+		cursor: move;
+		border:2px solid white;
+	}
+</style>
+
+<!-- 
+<button ng-click="toggle()">Toggle</button>
+      <p ng-show="visible">Hello World!</p>
 
  -->
 
+<!--
+<hr>
+<h2> Add to list </h2>
+<div ng-repeat="(name,info) in commands">
+	<button type="button" class="btn btn-default" ng-click="addToTaskList(name)">New: {{info.longname}}</button>
+</div>
+<h2> TaskList </h2>
+<ul ng-repeat="item in tasklist">
+	<li> {{item}} </li>
+</ul>
+<hr>
 
+
+-->
+
+<!-- make an element draggable -->
+<!-- create a drop target and specify a callback function -->
+
+<!-- 
+<h2>Drag and drop - Probeer</h2>
+<div x-lvl-draggable='true' width="100px">drag me!</div>
+<hr>
+<div x-lvl-drop-target='true' x-on-drop='dropped(dragEl, dropEl)'>drop zone</div>
+<div ng-repeat="(Setting,info) in commands">
+	<div x-lvl-draggable='true'>{{info.longname}}</div>
+</div>
+<hr>
+ -->
+
+ <h1>{{status}}</h1>
+
+
+<div ng-repeat="(type,results) in data.results">
+	<h2> {{type}} </h2>
+	<div ng-repeat="item in data.results">
+		<hbobject data=item>	</hbobject>
+	</div>
+<div>
+
+
+
+<!--
     <h2>Processing Options</h2>
+
 	<div ng-repeat="(Setting,info) in commands">
 		<h3> {{info.longname}} </h3>
 
@@ -17,7 +113,10 @@
 				<div class="form-group">
 					<label class="control-label col-sm-2" for="Setting">{{sn}}</label>
 					<div class="col-sm-10 col-sm-4">
-						<input type="email" class="form-control" id="email" placeholder={{s.default}}>
+						<input type="email" 
+						       class="form-control" 
+						       id="email" 
+							   placeholder={{s.default  " - type " + s.type}} >
 					</div>
 				</div>
 			</div>

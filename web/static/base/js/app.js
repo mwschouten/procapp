@@ -1,6 +1,8 @@
 
 var app = angular.module('TSXCatalogue', 
-        ['ngCookies','ngRoute','leaflet-directive','datarefresh','ui.bootstrap'])
+        // ['ngCookies','ngRoute','leaflet-directive','datarefresh','ui.bootstrap',])
+        ['ngCookies','ngRoute','leaflet-directive','datarefresh','ui.bootstrap','lvl.directives.dragdrop'])
+ 
 
 app.config([
     '$httpProvider',

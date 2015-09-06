@@ -23,7 +23,7 @@ import requests
 # traceback.print_stack()
 # app = Celery('processing',backend='amqp')
 
-base_url = 'http://127.0.0.1:8000'
+base_url = 'http://127.0.0.1:8000/api'
 
 
 try:
@@ -125,7 +125,8 @@ class HbTask():
 
         # user short name if there is no long one
         self.longname = getattr(self,'longname',self.name)
-
+        self.resulttype = self.result.type
+        
         # celery task
         self.name = getattr(self,'name',self.longname.title().replace(' ',''))
         self.log = logging.getLogger(self.name)
@@ -310,6 +311,7 @@ class HbTask():
                 stored_task.celery_taskname = getattr(self.runtask,'name','')
                 stored_task.parameters = json.dumps(self.settings.get)
                 stored_task.status = tasks.models.HBTask.NO_STATUS
+                stored_task.resulttype = self.resulttype
                 stored_task.save()
                 self.log.info('SAVED WITH ID {}'.format(stored_task.id))
 

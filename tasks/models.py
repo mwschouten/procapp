@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from django.db import models
 # from django.contrib.gis.db import models
@@ -22,12 +23,25 @@ class HBTask(models.Model):
     celery_taskname = models.CharField(max_length=100,blank=False)
     parameters      = models.TextField(null=True,blank=True)
     resulthash      = models.CharField(max_length=32,blank=True,null=True)
+    resulttype      = models.CharField(max_length=100,blank=False)
     status          = models.IntegerField(choices=STATUS_CHOICES,default=NO_STATUS)
     submitted       = models.DateTimeField(default = datetime.datetime.now())
 
     def __str__(self):
         return '{} for {} ({})'.format(self.celery_taskname,self.resulthash[0:10], 
             self.STATUS_CHOICES[self.status][1])
+
+    @property
+    def description(self):
+        """ Describe
+        """
+        return {'taskname':self.hb_taskname,
+                'settings':json.loads(self.parameters),
+                'result':{'hash':self.resulthash,'type':self.resulttype},
+                'status':self.STATUS_CHOICES[self.status][1]
+                }
+
+
 
 class HBTaskRun(models.Model):
     """

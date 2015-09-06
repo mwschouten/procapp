@@ -18,15 +18,48 @@ import datetime
 import sys,traceback
 import inspect
 
-def options(request):
-    out = {}
+## HELPERS
+def available_hbtasks():
+    """ iterate over all available hbtasks
+    """
+    out = []
     for tname in dir(tasks):
         t = getattr(tasks,tname)
-        # print tname, t, type(t)
-        # select the hbtask clases, but not hbtask (base) itself
         if inspect.isclass(t) and issubclass(t,tasks.HbTask) and t is not tasks.HbTask:
-            out[tname] = t().api
+            yield tname, t
 
+def tasks_that_make(thistype):
+    return [name for name,task in available_hbtasks() if task().result.type==thistype]
+    
+
+## VIEWS
+def options(request):
+    """ return the available tasks with their api
+    """
+    out = {name:task().api for name, task in available_hbtasks()}
+    return JsonResponse(out)
+
+
+
+def results(request):
+    """ return all saved results
+    provide e.g. {'query':{'hb_taskname':'Add'}} to select specific.
+    """
+    print request
+    print request.GET
+    q = {k:v for k,v in request.GET.iteritems()}
+
+    # q = request.GET.getlist('h')
+    # if q is None:
+    #     return JsonResponse({'Error':'provide query data with e.g. /?query={}'})
+
+    # allow for selection based on result type
+    thetype = q.pop('type',None)
+    if thetype is not None:
+        q['hb_taskname'] = q.get('hbtaskname',False) or tasks_that_make(thetype)
+
+    rr = models.HBTask.objects.filter(status__gt=models.HBTask.NO_STATUS,**q)
+    out = {'results':[r.description for r in rr]} if rr else {'results':None}
     return JsonResponse(out)
 
 
@@ -108,6 +141,7 @@ def available(request):
                 check_stored_status(obj)
 
             # For an empty object, thow false
+            print obj.content
             assert(obj.content)
 
             if is_async(obj.content):
@@ -116,13 +150,10 @@ def available(request):
                 thisone = True
 
         except Exception as e:
-            thisone = False
-            print '\nCAUGHT EXCEPTION\n',e
-            print '-'*60
-            traceback.print_exc(file=sys.stdout)
-            print '-'*60
-
+            print 'not available :',h
+        
         available.update({h:thisone})
+
     return JsonResponse(available)
 
 

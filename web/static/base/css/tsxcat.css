@@ -27,6 +27,19 @@
 	cursor: pointer; 
 }
 
+.hbobject {
+          color : #111111;
+          font-size: 35;
+          width:80% ;           /* Force width to simulate it is menu purpose right of the map */
+          background-color: #DDDDFF;
+          padding: 15px 30px;
+          margin: 20px 20px;
+          border-radius: 20px;
+      }
+.hbobject.success{
+          background-color: #DDFFCC;    
+}
+
 .top10 { margin-top:10px; }
 
 

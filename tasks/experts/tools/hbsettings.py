@@ -33,17 +33,11 @@ class Setting:
                  default=None,
                  mandatory=True,
                  validate=None,
-                 type=None):
+                 type=lambda x:x):
 
         assert isinstance(name, str)
         self.name = name
         self.type = type
-
-        if type is None:
-            if default is None:
-                self.type = lambda x:x
-            else:
-                self.type = __builtins__['type'](default)
 
         if isinstance((type),HbObject):
             default = None
@@ -61,14 +55,20 @@ class Setting:
         return 'Setting {} [{}]'.format(self.name, self.default)
 
     @property
-    def description(self):
-        """ description of the setting
+    def api(self):
+        """ describes what is expected and defaulted
         """
+        print 'name ',self.name
+        print 'default ',self.default
+        print 'type ',self.type
         if isinstance(self.type,HbObject):
-            tp = self.type.type
+            t = self.type.type
+            # d = self.
+        elif self.default:
+            t = str(type(self.default))
         else:
-            tp = self.type
-        return {'name':self.name,'type':str(tp),'mandatory':self.mandatory,'default':str(self.default)}
+            t = str(self.type)
+        return {'default':str(self.default), 'mandatory':self.mandatory, 'type':t}
 
     def validate(self, testval):
         """ Validate a single setting w.r.t. type etc. """
@@ -185,25 +185,14 @@ class Settings:
         return {name:s for name,s in self.settings.iteritems() if s.mandatory}
 
     @property
-    def description(self):
-        """ description of the settings
-        """
-        out = {}
-        for name,sett in self.settings.iteritems():
-            d = {k:v for k,v in sett.description.iteritems() if k is not 'name'}
-            out[name] = d
-        return out
-
-        if isinstance(self.type,HbObject):
-            tp = self.type.type
-        else:
-            tp = self.type
-        return {'name':self.name,'type':str(tp),'mandatory':self.mandatory,'default':self.default}
-
-    @property
     def valid(self):
         ok = [v.value for v in self.settings.values() if v.mandatory]
         return all(ok)
+
+    @property
+    def api(self):
+        return {k: v.api for k,v in self.settings.iteritems()}
+
 
 class NotValidError(Exception):
     def __init__(self, value, parameter,reason=None):

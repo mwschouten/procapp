@@ -48,6 +48,8 @@ def get_status_async(a):
     else:
         return None
 
+    print 'Checked status : ',status,msg
+
     return {'status':status,'msg':msg}
 
 

@@ -1,0 +1,115 @@
+
+
+
+<h3>ESA download catalogue</h3>
+
+	Last update ({{date_of_catalogue.time_ago}})
+	<table>
+	<tr> <td> Download </td> <td>{{date_of_catalogue.download}} </td></tr>
+	<tr> <td> Update   </td> <td>{{date_of_catalogue.update}} </td></tr>
+	<tr> <td> # images </td> <td>{{date_of_catalogue.n_imgs}} </td></tr>
+	</table>
+<!-- 	<div class="row">
+		<celery-task-control fnc="updateCat" running="running" name="name" workon="workon">jaja</celery-task-control>
+	</div>
+
+	<div ng-if="running">
+	Now: {{running}} : {{workon}}.
+	</div>
+ -->	
+<hr>
+
+<h3>Disk storage:</h3>
+
+	
+
+	<table class="table-rowselected">
+	<tr class="header">
+			<td>Machine</td> <td>Checked</td>  <td>Capacity</td> <td>Free</td> <td>Data</td> <td>%</td> <td>Active</td>
+	</tr>
+
+	<tr ng-repeat="item in datastats.downloaders">
+		<td>{{item.machine}}</td> <td>{{item.checked}} <td>{{item.capacity| number:2}} TB</td> 
+		<td>{{item.free| number:2}} TB</td> <td>{{item.data| number:2}} TB</td>
+		<td>
+			<meter id="meter" value={{item.free}} max={{item.capacity}} style="width:200px">
+				Free: {{item.free / item.capacity * 100 | number:1}}
+			</meter>
+		</td>
+		<td>{{item.active}}</td>
+	</tr>
+	<table>
+
+	<hr>
+
+<h3>Progress active downloaders:</h3>
+	<div ng-repeat="item in datastats.downloaders | filter:{active:true}">
+	<img src="/static/images/disk_fill_"{{item.machine}}".png" alt="Mountain View" style="width:500px;height:300px">
+	<hr>
+	</div>
+
+<h3>Availability vs download progress: summary</h3>
+
+	<table class="table-rowselected">
+	<tr class="header">
+			<td>day</td> 
+			<td>#</td> <td>OK</td> <td>%</td> 
+	</tr>
+	<tr>
+		<td>SLC</td>
+		<td>{{imagestats.summary.slc.acquired}}</td> <td>{{imagestats.summary.slc.stored}}</td>
+		<td>
+			<meter id="meter" value={{imagestats.summary.slc.stored+0.01}} max={{imagestats.summary.slc.acquired+0.01}} style="width:100px">
+				{{imagestats.summary.slc.stored / imagestats.summary.slc.acquired * 100 | number:2}}
+			</meter>
+		</td>
+	</tr>
+	<tr>
+		<td>RAW</td>
+		<td>{{imagestats.summary.raw.acquired}}</td> <td>{{imagestats.summary.raw.stored}}</td>
+		<td>
+			<meter id="meter" value={{imagestats.summary.raw.stored+0.01}} max={{imagestats.summary.raw.acquired+0.01}} style="width:100px">
+				{{imagestats.summary.raw.stored / imagestats.summary.raw.acquired * 100 | number:2}}
+			</meter>
+		</td>
+	</tr>
+	<tr>
+		<td>GRD</td>
+		<td>{{imagestats.summary.grd.acquired}}</td> <td>{{imagestats.summary.grd.stored}}</td>
+		<td>
+			<meter id="meter" value={{imagestats.summary.grd.stored+0.01}} max={{imagestats.summary.grd.acquired+0.01}} style="width:100px">
+			{{imagestats.summary.grd.stored / imagestats.summary.grd.acquired * 100 | number:2}}
+			</meter>
+		</td>
+	</tr>
+	</table>
+
+
+
+
+<h3>Availability vs download progress: per month</h3>
+
+	<table class="table-rowselected">
+	<tr class="header">
+			<td>day</td> 
+			<td>#SLC</td> <td>OK</td> <td>%</td> 
+			<td>#RAW</td> <td>OK</td> <td>%</td> 
+			<td>#GRD</td> <td>OK</td> <td>%</td> 
+	</tr>
+
+	<tr ng-repeat="item in imagestats.perday">
+	<td>{{item.date}}</td> 
+	
+	<td>{{item.slc.acquired}}</td> <td>{{item.slc.stored}}</td>
+	<td><meter id="meter" value={{item.slc.stored+0.01}} max={{item.slc.acquired+0.01}} style="width:100px"></meter></td>
+
+	<td>{{item.raw.acquired}}</td> <td>{{item.raw.stored}}</td>
+	<td><meter id="meter" value={{item.raw.stored+0.01}} max={{item.raw.acquired+0.01}} style="width:100px"></meter></td>
+
+	<td>{{item.grd.acquired}}</td> <td>{{item.grd.stored}}</td>
+	<td><meter id="meter" value={{item.grd.stored+0.01}} max={{item.grd.acquired+0.01}} style="width:100px"></meter></td>
+	
+	</tr>
+	<table>
+
+<hr>

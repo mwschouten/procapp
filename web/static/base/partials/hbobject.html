@@ -1,0 +1,13 @@
+<div 	class="hbobject" 
+		x-lvl-draggable='true' 
+		ng-class="{true:'success', false:'pending'}[data.status=='Success']">
+
+	<h4>{{data.result.type}}:{{data.result.hash}}</h4>
+	
+	<table>
+		<tr ng-repeat="(k,v) in data.settings">
+		<td>{{k}}</td> <td>{{v}}</td>
+		</tr>
+	</table>
+
+</div>

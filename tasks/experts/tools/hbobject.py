@@ -140,10 +140,10 @@ class HbObject():
             pickle.dump(self.content, fid, -1)
         os.rename(tempfile,filename)
 
-        print 'HBOBJECT NOW SAVED {}'.format(self.hash)
-        self.log.show()
-        print 'HBOBJECT CONTENT   {}'.format(self.content)
-        print 'HBOBJECT INFO      {}'.format(self.info)
+        # print 'HBOBJECT NOW SAVED {}'.format(self.hash)
+        # self.log.show()
+        # print 'HBOBJECT CONTENT   {}'.format(self.content)
+        # print 'HBOBJECT INFO      {}'.format(self.info)
         return
 
 
@@ -168,14 +168,12 @@ class HbObject():
             self.type = pickle.load(fid)
             self.log = HbLog()
             self.log.handler.data = pickle.load(fid)
-            print 'HBOBJECT NOW LOADED {}'.format(self.hash)
-            self.log.show()
             self.info = pickle.load(fid)
-            print 'HBOBJECT INFO      {}'.format(self.info)
             self.content = pickle.load(fid)
-            print 'HBOBJECT CONTENT   {}'.format(self.content)
-
-
+            # print 'HBOBJECT NOW LOADED {}'.format(self.hash)
+            # self.log.show()
+            # print 'HBOBJECT INFO      {}'.format(self.info)
+            # print 'HBOBJECT CONTENT   {}'.format(self.content)
         return True
 
 

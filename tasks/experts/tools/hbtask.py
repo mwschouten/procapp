@@ -23,7 +23,7 @@ import requests
 # traceback.print_stack()
 # app = Celery('processing',backend='amqp')
 
-base_url = 'http://127.0.0.1:8000'
+base_url = 'http://127.0.0.1:8000/api'
 
 
 try:
@@ -116,7 +116,6 @@ class HbTask():
         self.name = ''
         self.version = ''
         self.settings = Settings()
-        self.info = None
         self.result = None
 
         self.retry_wait = 10 # 10 sec default, wait for dependencies
@@ -126,7 +125,8 @@ class HbTask():
 
         # user short name if there is no long one
         self.longname = getattr(self,'longname',self.name)
-
+        self.resulttype = self.result.type
+        
         # celery task
         self.name = getattr(self,'name',self.longname.title().replace(' ',''))
         self.log = logging.getLogger(self.name)
@@ -139,6 +139,7 @@ class HbTask():
             
         if self.settings.valid:
             self.set_result()
+
 
     def runme(self):
         """ gives the thing that can be run: a signature
@@ -184,8 +185,9 @@ class HbTask():
             # If new, save empty
             if not result.known:
                 self.log.info('Save an empty result: {}'.format(result))
-                print 'INFO ',result.info
-                print 'CONT ',result.content
+                
+                print 'INFO ',self.result.info
+                print 'CONT ',self.result.content
 
                 result.save()
             
@@ -305,9 +307,10 @@ class HbTask():
             if isnew:
                 self.log.info('SAVE TASK TO DATABASE')
                 stored_task.hb_taskname = self.name
-                stored_task.celery_taskname = self.runtask.name
-                stored_task.parameters = json.dumps(self.settings.getstr)
+                stored_task.celery_taskname = getattr(self.runtask,'name','')
+                stored_task.parameters = json.dumps(self.settings.get)
                 stored_task.status = tasks.models.HBTask.NO_STATUS
+                stored_task.resulttype = self.resulttype
                 stored_task.save()
                 self.log.info('SAVED WITH ID {}'.format(stored_task.id))
 
@@ -331,20 +334,6 @@ class HbTask():
                 stored_task.save()
 
 
-    @property    
-    def api(self):
-        
-        resulttype = getattr(self.result,'type',None)
-        if resulttype is None:
-            resulttype = self.result.split(':')[0]
-
-        return ({'name':self.name,
-                 'version':self.version,
-                 'settings':self.settings.getstr,
-                 'dependencies':self.settings.description,
-                 'result': resulttype})
-
-
     @property
     def description(self):
         return ({'name':self.name,
@@ -354,19 +343,31 @@ class HbTask():
                  'result': str(self.result)})
 
     @property
+    def api(self):
+        # print '\nTASK NAME IS ', self.name        
+        # print 'THE RESULT WILL BE :',self.result
+        # print 'THE RESULT WILL BE :',type(self.result)
+       return {'name':self.name,
+                 'longname':self.longname,
+                 'version':self.version,
+                 'settings':self.settings.api,
+                 'dependencies':self.settings.dependencies,
+                 'result': self.result.type}
+
+    @property
     def json(self):
         return json.dumps(self.description)
 
 
-
-
-#     @celery.task
+# #    @celery.task
 #     def execute(self):
 #         """
 #         Perform the action through celery queue handlers
 #         Workers are activated using:    celery -A tasks worker --loglevel=info
+
 #         During the execution, we produce the content carried in
 #         self.result.content
+
 #         """
 #         print '----------------------------------------'
 #         print 'Now executing the HbTask'

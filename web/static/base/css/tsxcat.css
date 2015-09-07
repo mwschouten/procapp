@@ -1,0 +1,77 @@
+.location-icon {
+	font-size: 30px;
+	color: rgb(0,150,0);
+	text-align: center;
+	vertical-align: middle;
+	cursor: default;
+	background-color:rgba(255,0,0,0);
+}
+
+.location-icon.selected{
+	font-size: 50px;
+	color: rgb(150,0,0);
+}
+
+.location-icon.notsaved{
+	font-size: 50px;
+	color: rgba(255,150,50,0.8);
+}
+
+.scrollable-list {
+    height: auto;
+    max-height: 480px;
+    overflow-y: auto;
+}
+
+.nav, .pagination, .carousel, .panel-title a { 
+	cursor: pointer; 
+}
+
+.hbobject {
+          color : #111111;
+          font-size: 35;
+          width:80% ;           /* Force width to simulate it is menu purpose right of the map */
+          background-color: #DDDDFF;
+          padding: 15px 30px;
+          margin: 20px 20px;
+          border-radius: 20px;
+      }
+.hbobject.success{
+          background-color: #DDFFCC;    
+}
+
+.top10 { margin-top:10px; }
+
+
+/*ng-TABLE */
+table.table-rowselected tr {
+    cursor: pointer;
+    border: 1px solid black;
+    height: 25px;
+}
+
+table.table-rowselected tr.header {
+    background-color: #FFCF8B;
+    font-weight:bold;
+    font-size:15;
+}
+
+table.table-rowselected th,td{
+    padding-left: 30px;
+}
+
+table.table-rowselected tr.active {
+    background-color: #FFDF8F;
+}
+
+table.table-rowselected tr:hover {
+    background-color: #C9C9C9;
+}
+
+table.table-rowselected tr:hover.active {
+    background-color: #D9C79C;
+}
+
+table svg.image-points {
+    margin: 5px;
+}

@@ -9,6 +9,8 @@ from pprint import pprint
 from tasks import models
 from time import sleep
 
+BASE_URL = 'http://127.0.0.1:8000/'
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -48,18 +50,18 @@ def req(url,*pars):
             return None
     except Exception as e:
         print_error('Error : '+url)
-        print_error(e)
+        print_error(str(e))
 
 def check_status(hh,wait=False):
     print 'Check status:'
     ok = False
     while not ok:
-        url = 'http://127.0.0.1:8000/available/'
+        url = BASE_URL + 'api/available/'
         url = url + '?h=' + '&h='.join(hh)
 
         # print_ok ('URL : '+url)
         s= req(url)
-        # print s
+        print s
         for h in hh:
             print_progress('  {} : {}'.format(h,s[h]))
         print 
@@ -67,7 +69,7 @@ def check_status(hh,wait=False):
         # print s.values()
         if not wait:
             return
-        sleep(0.5)
+        sleep(1)
 
 
 def cleanup():
@@ -86,9 +88,11 @@ def cleanup():
 
 def setup():
 
-    url = 'http://127.0.0.1:8000/check/Add/?a={}&b={}'
+    url = BASE_URL + 'api/check/Add/?a={}&b={}'
     r1 = req(url,1,2)
     r2 = req(url,2,3)
+
+    print 'r1 : ',r1
 
     h1 = r1['result'].split(':')[1]
     h2 = r2['result'].split(':')[1]
@@ -97,7 +101,7 @@ def setup():
     print 'add 2+3 :', h2
 
     # Thirs step: add the two results
-    r3 = req('http://127.0.0.1:8000/check/Add2/?a={}&b={}',h1,h2)
+    r3 = req(BASE_URL + 'api/check/Add2/?a={}&b={}',h1,h2)
     h3 = r3['result'].split(':')[1]
     print '\nadd two results :', h3
 
@@ -110,16 +114,16 @@ def main():
     h1,h2,h3 = setup()
     #  Not yet available (nothing is)
     print_progress('\nAvailablility of third step?')
-    print_response(req('http://127.0.0.1:8000/available/?h={}',h3))
+    print_response(req(BASE_URL + 'api/available/?h={}',h3))
     check_status([h1,h2,h3])
 
 
     # Now run one
-    r1 = req('http://127.0.0.1:8000/run/{}',h1)
+    r1 = req(BASE_URL + 'api/run/{}',h1)
     check_status([h1],wait=True)
 
     print_progress('\ndependency status of third:')
-    print_response(req('http://127.0.0.1:8000/status/{}',h3)['dependency_status'])
+    print_response(req(BASE_URL + 'api/status/{}',h3)['dependency_status'])
 
 # print '\nNow wait two seconds'
 # for i in range(5):
@@ -128,7 +132,7 @@ def main():
 
 
     print_progress('\nTry to run third step:')
-    r5 = req('http://127.0.0.1:8000/run/{}',h3)
+    r5 = req(BASE_URL + 'api/run/{}',h3)
     print_response(r5)
 
     print_progress ('\nNow wait for all results')

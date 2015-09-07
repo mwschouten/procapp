@@ -1,0 +1,113 @@
+
+<!-- <h2>ESA S Catalogue </h2> -->
+<!-- <h4>{{eventDetected}}</h4>  -->
+
+<div class="row">
+	<!-- map -->
+	<div class="col-md-12">
+		<leaflet defaults="defaults" center="center" bounds="bounds" 
+				 layers="layers" height="580px" width="100pct"
+				 markers="markers" event-broadcast="events"
+				 geojson="geojson">
+		</leaflet>
+	</div>
+</div>
+
+
+  
+<!-- below -->
+<!-- 
+<div class="row top10">
+
+ 	<div class="col-md-4" style="background-color: rgba(220,0,0,0.3)">
+			<label class="checkbox inline" class="form-horizontal">
+			<input type="checkbox" ng-model="show.SLC" ng-change="updateMap()" >
+			Show SLC
+			</label>
+	</div>			
+	<div class="col-md-4" style="background-color: rgba(250,180,0,0.3)">
+			<label class="checkbox inline" class="form-horizontal">
+			<input type="checkbox" ng-model="show.RAW" ng-change="updateMap()" >
+			Show RAW
+			</label>
+	</div>			
+	<div class="col-md-4" style="background-color: rgba(130,130,130,0.3)">
+			<label class="checkbox inline" class="form-horizontal">
+			<input type="checkbox" ng-model="show.GRD" ng-change="updateMap()" >
+			Show GRD
+			</label>
+	</div>
+
+ </div>
+ -->
+<div class="row top10" >
+	<table class="table-rowselected">
+		<tr class="header">
+				<td>Mode:</td> <td>Image</td> <td>Date</td> <td>ID</td></td>
+		</tr>
+
+		<!-- <tr ng-repeat="item in imagedata_point.features" ng-class="{'active': item.$selected}"> -->
+		<!-- <tr ng-repeat="item in imagedata_point.features | filter: show[item.properties.imgformat.substr(0,3)]" -->
+<!-- 		<tr ng-repeat="item in geojson.data.features | filter: toShow()"
+			ng-class="{'active': item.$selected}">
+ -->
+		<tr ng-repeat="item in imagedata_point.features | filter: toShow()"
+			ng-class="{'active': item.$selected}">
+
+			<td data-title="'Mode'"> {{item.properties.mode}}</td> 
+			<td data-title="'Image'"> {{item.properties.imgformat.substr(0,3)}}</td> 
+			<td data-title="'Date'"> {{item.properties.date}} </td>
+			<td data-title="'ID'"> {{item.properties.esa_id}} </td>
+
+		</tr>
+	</table>
+</div>
+<!-- {{ imagedata_point.features }}
+ -->
+<!-- 
+<div class="row top10">
+	<table class="table-rowselected">
+	<tr class="header">
+			<td>Mode:</td> <td>Beam:</td> <td>Orbit:</td> <td>#:</td>  <td>Sampling:</td> <td>Keep:</td>
+	</tr>
+
+		<tr ng-repeat="item in geojson.data.features | filter: enoughImages() "
+			ng-class="{'active': item.$selected}">
+
+			<td data-title="'Mode'"> {{item.properties.mode}}</td> 
+			<td data-title="'Beam'"> {{item.properties.beam}}</td> 
+			<td data-title="'Orbit'"> {{item.properties.orbit}} </td>
+			<td data-title="'#'"> {{item.properties.dates.length}} </td>
+			<td data-title="'Sampling'" ng-click="searchCatalogue_onestack(item)"> 
+				<plot-date-points 
+					data="item.properties.datevals" 
+					graph="graph" 
+					datelim="datelim">
+				</plot-date-points> 
+			</td>
+		<td>
+		  	<input type="checkbox" ng-model="item.kept" ng-change="keep_unkeep_stack(item)">
+		</td>
+		</tr>
+
+		<tr class="footer"> 
+			<td></td> <td></td> <td></td> <td></td>
+			<td><plot-date-points-axis graph="graph" datelim="datelim"></plot-date-points-axis></td>
+			<td></td>
+		</tr>
+	</table>
+</div>
+
+ -->
+<!-- <div ng-repeat="item in geojson.data.features | filter: enoughImages()">
+
+	<h2>{{item.properties.beam}}</h2>
+
+	{{item.properties.dates}}
+
+	<div ng-repeat="d in item.properties.dates | filter: orderBy:d">
+		{{d}}
+	</div>
+
+</div>
+ -->

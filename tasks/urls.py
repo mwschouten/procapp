@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 """proc URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -15,12 +16,16 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
-import tasks.urls
-import web.urls
+from tasks import views
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^accounts/', include('accounts.urls')),
-    url(r'^api/', include(tasks.urls)),
-    url(r'^$', include(web.urls)),
-    ]
+    url(r'^options/', views.options),
+    url(r'^check/(?P<task_name>.+?)/', views.check),
+    url(r'^available/', views.available),
+    url(r'^run/(?P<resulthash>.+?)/', views.run),
+    url(r'^status/(?P<resulthash>.+?)/', views.status),
+    url(r'^finished/(?P<resulthash>.+?)/', views.finished),
+    url(r'^info/(?P<resulthash>.+?)/', views.info),
+    url(r'^results/', views.results),
+]

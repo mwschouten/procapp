@@ -1,0 +1,68 @@
+
+<h2>Available frames</h2>
+
+
+    <table class="table-striped">
+	<thead>
+		<tr>
+				<td>Image mode:</td> <td>Orbit:</td> <td>#:</td>  <td>Sampling:</td>
+		</tr>
+	</thead>
+	<tbody>
+    <tr ng-repeat="item in images | filter: enoughImages(10)"
+    	ng-click="item.$selected = !item.$selected; changeSelection(item)"
+    	ng-class="{'active': item.$selected}">
+
+		<td data-title="'Image mode'"> {{item.properties.image_mode}}</td> 
+		<td data-title="'Orbit'"> {{item.properties.orbit}} </td>
+		<td data-title="'#'"> {{item.properties.dates.length}} </td>
+		<td data-title="'Sampling'"> 
+			<plot-date-points 
+				data="item.properties.datevals" 
+				graph="graph" 
+				datelim="datelim">
+			</plot-date-points> 
+		</td>
+		</tr>
+	<tr class="footer"> 
+		<td></td> <td></td> <td></td>
+		<td><plot-date-points-axis graph="graph" datelim="datelim"></plot-date-points-axis></td>
+	</tr>
+	</tbody>
+    </table>
+
+	<div>
+		<strong>Selected:</strong> {{ images | filter:{"$selected": true} }}
+	</div>
+ 
+
+<!-- h2>Available frames</h2>
+
+
+    <table ng-table='tableParams' class="ng-table-rowselected"  show-filter="true" >
+    <tr ng-repeat="item in images"
+    	ng-click="item.$selected = !item.$selected; changeSelection(item)"
+    	ng-class="{'active': item.$selected}">
+
+		<td data-title="'Image mode'"> {{item.properties.image_mode}}</td> 
+		<td data-title="'Orbit'"> {{item.properties.orbit}} </td>
+		<td data-title="'#'"> {{item.properties.dates.length}} </td>
+		<td data-title="'Sampling'"> 
+			<plot-date-points 
+				data="item.properties.datevals" 
+				graph="graph" 
+				datelim="datelim">
+			</plot-date-points> 
+		</td>
+		</tr>
+
+	<tr> 
+		<td></td> <td></td> <td></td>
+		<td><plot-date-points-axis graph="graph" datelim="datelim"></plot-date-points-axis></td>
+	</tr>
+    </table>
+
+	<div>
+		<strong>Selected:</strong> {{ images | filter:{"$selected": true} }}
+	</div>
+  -->

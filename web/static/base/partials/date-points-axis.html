@@ -1,0 +1,4 @@
+<svg height="20" ng-attr-width="{{graph.width}}">
+  <rect ng-repeat="d in yearbars" ng-attr-x="{{d}}" y="0" width="2" height="25" color="blue"> </rect>
+  <text ng-repeat="d in yeartext" ng-attr-x="{{d.x}}" y="20">{{d.val}}</text>
+</svg>  

@@ -1,0 +1,14 @@
+<div>
+
+    <div class="hbdropzone"
+        settingid={{name}} 
+         x-lvl-drop-target='true' 
+         x-on-drop="this.droppedonme(dragEl, dropEl)"
+         ng-mouseenter="this.show_origin()"
+         ng-mouseleave="this.show_type()">
+            <span class="labela"
+                  ng-class="{true:'label-success', false:'label-danger'}[this.drop_ok==true]">
+                  {{this.content}}
+            </span> 
+    </div>
+</div>

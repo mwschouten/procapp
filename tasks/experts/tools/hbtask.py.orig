@@ -116,6 +116,7 @@ class HbTask():
         self.name = ''
         self.version = ''
         self.settings = Settings()
+        self.info = None
         self.result = None
 
         self.retry_wait = 10 # 10 sec default, wait for dependencies
@@ -185,9 +186,13 @@ class HbTask():
             # If new, save empty
             if not result.known:
                 self.log.info('Save an empty result: {}'.format(result))
+<<<<<<< HEAD
+=======
                 
-                print 'INFO ',self.result.info
-                print 'CONT ',self.result.content
+                print 'RESULT : ',result
+>>>>>>> 641d756e775e7c9cd217503f1ae6a8aaff714a2d
+                print 'INFO ',result.info
+                print 'CONT ',result.content
 
                 result.save()
             
@@ -307,8 +312,13 @@ class HbTask():
             if isnew:
                 self.log.info('SAVE TASK TO DATABASE')
                 stored_task.hb_taskname = self.name
+<<<<<<< HEAD
+                stored_task.celery_taskname = self.runtask.name
+                stored_task.parameters = json.dumps(self.settings.getstr)
+=======
                 stored_task.celery_taskname = getattr(self.runtask,'name','')
                 stored_task.parameters = json.dumps(self.settings.get)
+>>>>>>> 641d756e775e7c9cd217503f1ae6a8aaff714a2d
                 stored_task.status = tasks.models.HBTask.NO_STATUS
                 stored_task.resulttype = self.resulttype
                 stored_task.save()
@@ -334,20 +344,33 @@ class HbTask():
                 stored_task.save()
 
 
+    @property    
+    def api(self):
+        
+        resulttype = getattr(self.result,'type',None)
+        if resulttype is None:
+            resulttype = self.result.split(':')[0]
+
+        return ({'name':self.name,
+                 'version':self.version,
+                 'settings':self.settings.getstr,
+                 'dependencies':self.settings.description,
+                 'result': resulttype})
+
+
     @property
     def description(self):
-        # convert from typehash to items
-        tp,h =self.result.split(':') 
         return ({'name':self.name,
                  'version':self.version,
                  'settings':self.settings.getstr,
                  'dependencies':self.settings.dependency_dict,
-                 'result': {'type':tp, 'hash':h}})
-
+                 'result': str(self.result)})
 
     @property
     def api(self):
-       # print '\nTASK NAME IS ', self.name        
+        # print '\nTASK NAME IS ', self.name        
+        # print 'THE RESULT WILL BE :',self.result
+        # print 'THE RESULT WILL BE :',type(self.result)
        return {'name':self.name,
                  'longname':self.longname,
                  'version':self.version,
@@ -360,15 +383,15 @@ class HbTask():
         return json.dumps(self.description)
 
 
-# #    @celery.task
+
+
+#     @celery.task
 #     def execute(self):
 #         """
 #         Perform the action through celery queue handlers
 #         Workers are activated using:    celery -A tasks worker --loglevel=info
-
 #         During the execution, we produce the content carried in
 #         self.result.content
-
 #         """
 #         print '----------------------------------------'
 #         print 'Now executing the HbTask'

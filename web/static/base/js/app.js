@@ -40,7 +40,7 @@ app.config(function ($routeProvider) {
         //     })
         .when('/start',
             {controller: 'ProcessingCtrl',
-             templateUrl: '/static/base/partials/start.html'
+             templateUrl: 'web/static/base/partials/start.html'
             })
 
         .otherwise({ redirectTo: '/search'});

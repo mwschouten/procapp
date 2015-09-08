@@ -1,7 +1,10 @@
 <div 	class="hbobject" 
 		x-lvl-draggable='true' 
-		ng-class="{true:'success', false:'pending'}[data.status=='Success']">
+		ng-class="{true:'success', false:'pending'}[data.status=='Success']"
+        >
 
+    <div hidden class="hbhash">{{data.result.hash}}</div>
+    <div hidden class="hbtype">{{data.result.type}}</div>
 	<h4>{{data.result.type}}:{{data.result.hash}}</h4>
 	
 	<table>

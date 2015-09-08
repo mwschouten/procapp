@@ -28,7 +28,7 @@ class HBTask(models.Model):
     submitted       = models.DateTimeField(default = datetime.datetime.now())
 
     def __str__(self):
-        return '{} for {} ({})'.format(self.celery_taskname,self.resulthash[0:10], 
+        return '{} for {} ({})'.format(self.hb_taskname,self.resulthash[0:10], 
             self.STATUS_CHOICES[self.status][1])
 
     @property

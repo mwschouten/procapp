@@ -40,7 +40,7 @@ def req(url,*pars):
     try:
         if pars:
             url = url.format(*pars)
-        'REQUEST : ',url
+        print 'REQUEST : ',url
         r = requests.get(url)
         if r.ok:
             return r.json()
@@ -69,7 +69,7 @@ def check_status(hh,wait=False):
         # print s.values()
         if not wait:
             return
-        sleep(1)
+        sleep(2)
 
 
 def cleanup():

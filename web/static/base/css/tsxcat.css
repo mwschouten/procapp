@@ -30,17 +30,37 @@
 .hbobject {
           color : #111111;
           font-size: 35;
-          width:80% ;           /* Force width to simulate it is menu purpose right of the map */
+          width:100% ;           /* Force width to simulate it is menu purpose right of the map */
           background-color: #DDDDFF;
-          padding: 15px 30px;
-          margin: 20px 20px;
+          padding: 3px 3px;
+          margin: 5px 5px;
           border-radius: 20px;
       }
 .hbobject.success{
           background-color: #DDFFCC;    
 }
 
+.hbdropzone {
+        ;
+}
+
+.labela {
+  height : 100%;
+  font-size: 24px;
+  color: #FFFFFF;
+  padding: 5px 20px;
+  margin: 3px 3px;
+  border-radius: 10px;
+}
+
 .top10 { margin-top:10px; }
+
+/*Make header clickable for all harmonica objects*/
+.accordion-toggle { 
+  display: block;
+  padding: 10px 15px;
+ }
+.panel-heading { padding: 0px;}
 
 
 /*ng-TABLE */

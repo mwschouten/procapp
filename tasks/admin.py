@@ -7,3 +7,4 @@ from .models import *
 admin.site.register(HBTask)
 admin.site.register(HBTaskRun)
 admin.site.register(Waiting)
+admin.site.register(Project)

@@ -40,6 +40,7 @@ INSTALLED_APPS = (
 
     'djcelery',
     'accounts',
+    'tagging',
 
     'tasks',
     'web'
@@ -102,6 +103,10 @@ USE_L10N = True
 
 USE_TZ = True
 
+
+
+# Tagging settings
+FORCE_LOWERCASE_TAGS = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/

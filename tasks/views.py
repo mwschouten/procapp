@@ -102,7 +102,19 @@ def check(request,task_name):
             {'error':'Invalid settings: {}'.format(action.settings.errors)})
 
     action.set_result()
-    return JsonResponse(action.description)
+
+    out = action.description
+
+    # out.update({'status':check_available_object(action.result)})
+    try:
+        print 'Now check action : ',action.result
+        result = HbObject(action.result)
+        assert(result.available)
+        out.update({'status':result.status[0]})
+    except:
+            out.update({'status':'NO_STATUS'})
+
+    return JsonResponse(out)
 
 
 def available(request):
@@ -128,12 +140,16 @@ def available(request):
     hashes = request.GET.getlist('h',None)
     available = {}
     for h in hashes:
+                
+        available.update({h:check_available_object(h)})
+
+    return JsonResponse(available)
+
+def check_available_object(h):
         thisone = False
         try:
         # if True:
             stored = models.HBTask.objects.get(resulthash=h)
-
-            print 'Look for ',h
             obj = HbObject(hash=h)
 
             # check if database status is still correct
@@ -147,14 +163,9 @@ def available(request):
                 thisone = get_status_async(obj.content) or True
             else:
                 thisone = True
-
         except Exception as e:
             print 'not available :',h
-        
-        available.update({h:thisone})
-
-        available.update({h:thisone})
-    return JsonResponse(available)
+        return thisone
 
 
 def status(request,resulthash):
@@ -179,7 +190,6 @@ def status(request,resulthash):
             'log'           : {'text':R.log.data,'dates':[t0,t1]},
             'dependency_status'  : T.dependency_status()
         }
-
     return JsonResponse(out)
 
 
@@ -233,23 +243,37 @@ def run(request, resulthash):
                 run(None,resulthash=d.resulthash)
         else:
             action.submit()
-            time.sleep(0.5)
             obj = HbObject(hash=resulthash)
             status,fullstatus = check_stored_status(obj)
             thisone = fullstatus or True 
 
-    return JsonResponse({resulthash:thisone})
+    return JsonResponse({'result':thisone})
     # return JsonResponse(thisone)
 
 
 def finished(request, resulthash):
     """ mark as finished, remove waiting for this one, start the waiting if it can
     """
+
+    print 'Request : ',request.GET
+    info = request.GET.get('short_info',False)
+    print 'Found info : ',info
+
+    # TODO: Pass errors as well?
     try:
         stored = models.HBTask.objects.get(resulthash=resulthash)
         stored.status = 2
+        if info:
+            stored.short_info = info
+
         stored.save()
         thisone = 'Ok'
+        runs = models.HBTaskRun.objects.filter(task=thisone,done=False)
+
+    # make run finished
+        for r in runs:
+            r.done = True
+            r.save()
     except:
         thisone = {'Error':'not found in database'}
         
@@ -271,4 +295,11 @@ def info(request, resulthash):
     """
     h = HbObject(resulthash)
     return JsonResponse({resulthash:h.info})    
+
+
+def projects(request):
+    """ read info
+    """
+    pp = models.Project.objects.filter(active=True)
+    return JsonResponse({'result':[p.name for p in pp]})    
 

@@ -2,7 +2,7 @@
 
 
 {% load staticfiles %}
-
+    
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -17,8 +17,9 @@
 {% block title %}
 {% endblock %}
 
+
 {% block header %}
-<div id="mainheader" class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+<div id="mainheader" class="navbar navbar-inverse navbar-fixed-top" role="navigation" ng-controller="HeaderCtrl">
     <div class="container-fluid" style="">
 
         <div class="navbar-header">
@@ -29,37 +30,30 @@
             </button>
             <a class="navbar-brand" href="">Processing Center</a>
         </div>
-
         {% if user.is_authenticated %}
-        <ul class="nav navbar-nav">
-            <li><a href="#start">Start</a> </li>
-            <!-- <li><a href="#reports">Reports</a> </li> -->
-            <!-- <li><a href="#frames">Frames</a></li> -->
-            <!-- <li><a href="#notifications">Notifications</a></li> -->
-            <!-- <li><a href="#dashboard">Dashboard</a></li> -->
-        </ul>
+            <ul class="nav navbar-nav">
+                <!-- <li><a href="#start">Start</a> </li> -->
+            </ul>
 
-        <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <a>
-                        <span class="glyphicon glyphicon-user"> {{ user.username }}</span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="{% url 'django.contrib.auth.views.logout' %}">
-                        <span class="glyphicon glyphicon-log-out">&nbsp;</span>
-                    </a>
-                </li>
-        </ul>
+            <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a>
+                            <span class="glyphicon glyphicon-user"> {{ user.username }}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'django.contrib.auth.views.logout' %}">
+                            <span class="glyphicon glyphicon-log-out">&nbsp;</span>
+                        </a>
+                    </li>
+            </ul>
 
         {% else %}
-
-        <ul class="nav navbar-nav navbar-right">
-            <li>
-                <a href="{% url 'django.contrib.auth.views.login' %}"> Log in</a>
-            </li>
-        </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="{% url 'django.contrib.auth.views.login' %}"> Log in</a>
+                </li>
+            </ul>
         {% endif %}
 
 
@@ -68,8 +62,9 @@
 {% endblock %}
 
 
+
 {% block all_content %}
-    <div class="container" style="padding-top: 60px">
+    <div class="container-fluid" style="padding-top: 60px">
         {% block content %}
         <!-- This is replaced by index.html-->
         {% endblock %}

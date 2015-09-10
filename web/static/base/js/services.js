@@ -73,8 +73,40 @@ app.service('dataService', function ($http, $rootScope) {
     }
  });
 
-app.service('procService', function ($http) {
+
+app.service('projectService', function ($http) {
+    this.requestProjects =  function(){
+            console.log('Do request projects')
+            return $http({
+                url:  "/api/projects/",
+                method: "GET",
+            }).success(function(result){
+                // make results available
+                console.log('Succesfully queried projects');
+                console.log(result)
+                this.active = result.result
+                this.current = this.active[0]
+
+            })
+    }
+
+    this.set_current = function(name){
+        this.current = name
+    }
+
+    this.get_active = function(){
+        return this.active
+    }
+    this.get_current = function(){
+        return this.current
+    }
+});
+
+
+
+app.service('procService', function ($http, projectService) {
     this.status = 'Probeer eens wat';
+
     this.requestOptions =  function(){
             console.log('Do request options')
             return $http({
@@ -110,6 +142,9 @@ app.service('procService', function ($http) {
 
     this.check = function(what,parameters){
         console.log('Check a ',what)
+        parameters.project = projectService.current
+        console.log('Check with project: ',parameters.project)
+            
             this.result=[]
             return $http({
                 url:  "/api/check/"+what,
@@ -133,8 +168,9 @@ app.service('procService', function ($http) {
             }).success(function(jsonData){
                 // make results available
                 console.log('Succesfully submitted :',what);
-                console.log(jsonData)
-                this.result = jsonData
+                console.log('Data returned: ',jsonData)
+                // this.result=jsonData
+                
             })
     }
 

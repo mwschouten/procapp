@@ -101,7 +101,13 @@ def check_stored_status(obj):
     else:
         if (newstatus==2):
             url = base_url + '/finished/{}'.format(obj.hash)
-            r = requests.get(url)
+            
+            try:
+                info = obj.info.get('short',False)
+                r = requests.get(url,params={'short_info':info})
+            except:
+                r = requests.get(url)    
+
             print r.ok,r.status_code
         return newstatus,status_checked
 
@@ -261,7 +267,7 @@ class HbTask():
 
         # try if we already have this item
         # The task has already been submitted and saved 
-        resulthash = str(self.result).split(':')[1]
+        resulthash = self.result.split(':')[1]
 
         result = HbObject(hash=resulthash)
 

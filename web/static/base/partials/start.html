@@ -92,156 +92,156 @@
 
 <div ng-if="error" class="alert alert-danger" role="alert">{{status}}</div>
 
-<h1> Processing page for {{toDo}} ({{commandToDo.longname}})</h1>
-<hr>
 
-
-<h2> Available </h2>
 <div class="container-fluid">
-<div class="row-fluid">
+    <div class="row">
+        <div class="col-sm-8">
+        </div>
+        <div class="col-sm-4">
+            <div class="dropdown pull-right">
+              <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                <span class="glyphicon glyphicon-th" aria-hidden="true"></span>
+                Project: {{current_project}}
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                <div ng-repeat="item in active_projects">
+                <li><a ng-click="switch_project(item)">{{item}}</a></li>
+                </div>
+              </ul>
+            </div>
+        </div>
+    </div>  <!--row -->
 
-<div class="col-sm-6">
-    <div ng-repeat="(type,results) in input">
-        <h2> {{type}} </h2>
-        <accordion close-others="false" ng-repeat="item in results">
-            <accordion-group is-open="status.open">
-                <accordion-heading>
-                    {{item.result.type}} {{item.result.hash.substring(0,10)}}
-                    <i class="pull-right glyphicon" 
-                    ng-class="{'glyphicon-chevron-down': status.open, 'glyphicon-chevron-right': !status.open}"></i>
-                </accordion-heading>
+    <!-- title -->
+    <div class="row">
+        <div class="col-sm-12">
 
-                <hbobject data=item>    </hbobject>
-            </accordion-group>
-        </accordion>
-    </div>
-</div> <!--end of left column-->
+            <h2> {{toDo}} ({{commandToDo.longname}})
+            <!-- switch item -->
+            <div class="dropdown pull-right">
+              <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                <span class="glyphicon glyphicon-th" aria-hidden="true"></span>
+                Switch
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                <div ng-repeat="(name,item) in commands">
+                <li><a ng-click="switch_todo(name)">{{item.longname}}</a></li>
+                </div>
+              </ul>
+            </div>
+            </h2> 
+        </div>
+    </div> <!-- row -->
 
-<div class="col-sm-6">
-    <h2> Previous results for {{toDo}} </h2>
-    <accordion close-others="false" ng-repeat="item in results">
-        <accordion-group is-open="status.open">
+<div class="row">
+
+<div class="col-sm-4">
+    <h2> Available: {{toDo}} 
+    <button class="btn btn-default pull-right" ng-click="do_new=!do_new">
+        <span class="glyphicon glyphicon-plus" aria-hidden="true">
+        {{!do_new && 'New' || 'Cancel'}} </span>
+    </button>
+    </h2>
+    
+    <div class="scrollable-list">
+        <accordion close-others="false">  
+        <accordion-group is-open="status.open" ng-repeat="item in results">
             <accordion-heading>
-                {{item.result.type}} {{item.result.hash.substring(0,10)}}
-                <i class="pull-right glyphicon" 
-                ng-class="{'glyphicon-chevron-down': status.open, 'glyphicon-chevron-right': !status.open}"></i>
+                    {{item.date| date:"yyyy.MMM.dd"}} : {{item.short_info}} 
+                    <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': status.open, 'glyphicon-chevron-right': !status.open}"></i>
             </accordion-heading>
 
-            <hbobject data=item>    </hbobject>
+            <hbobject data=item current=current>    </hbobject>
         </accordion-group>
-    </accordion>
-</div> <!--end of second column-->
+        </accordion>
+    </div>
+</div> <!--end of column-->
+
+<div ng-show="do_new">
+    <!-- Show input -->
+    <div class="col-sm-4 " >
+        <div ng-repeat="(type,results) in input">
+            <h2> Input: {{type}} </h2>
+            <div class="scrollable-list">
+            <accordion close-others="false">
+                <accordion-group is-open="status.open"  ng-repeat="item in results">
+                    <accordion-heading>
+                    {{item.date| date:"yyyy.MMM.dd"}} :  {{item.short_info}} 
+                        <i class="pull-right glyphicon" 
+                        ng-class="{'glyphicon-chevron-down': status.open, 'glyphicon-chevron-right': !status.open}"></i>
+                    </accordion-heading>
+
+                    <hbobject data=item>    </hbobject>
+                </accordion-group>
+            </accordion>
+            </div>
+        </div>
+    </div> <!--end of  column-->
+
+    <!-- Make a new one -->
+    <div class="col-sm-4">
+        <h2> New: {{toDo}} </h2>
+        <form class="form-horizontal" role="form">
+            <div ng-if="dependencies.length>0">
+                <h4> Dependencies </h4>
+                <div ng-repeat="s in dependencies">
+                    <div class="form-group">
+                        <label class="control-label col-sm-2" ng-for={{s}} >{{s}}</label>
+                        <div class="col-sm-10 col-sm-6">
+                            <hashdropzone name=s setting=commandToDo.settings[s] data=parameters> </hashdropzone>
+                        </div>
+                    </div>
+                </div>
+            </div>  
+             <div ng-if="othersettings.length>0">
+                <h4> Settings </h4>
+                <div ng-repeat="s in othersettings">
+                    <div class="form-group">
+                        <label class="control-label col-sm-2" ng-for={{s}} >{{s}}</label>
+                        <div class="col-sm-10 col-sm-6">
+                                <input ng-for=s 
+                                       placeholder={{commandToDo['settings'][s].default}} 
+                                       ng-model=parameters[s]>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group"> 
+                <div class="col-sm-offset-2 col-sm-10">
+                  <button type="Check" class="btn btn-default" ng-click="check()">Check</button>
+                </div>
+            </div>
+        </form>
+           
+        <hbobject ng-if="checked_ok==true" data="thing_to_make"> </hbobject>
+
+
+        <button type="Run" class="btn btn-default" ng-click="submit()">Submit</button>
+        <hr>
+    </div> <!-- end of do new -->
+
+</div>
+<!-- otherwise (not making a new) -->
+<div ng-hide="do_new">
+    <div class="col-sm-8">
+    <leaflet 
+        center="amsterdam" controls="controls" bounds="bounds"
+        layers="layers"  height="1000px" width="100%"
+        geojson="geojson">
+    </leaflet>
+
+    </div>
+</div>
+
+
 </div> <!--end of row-->
 </div> <!--end of container-->
-
-
-<!-- <h1> hash dropzone</h1>
-<div ng-repeat="(sn,s) in commandToDo['settings']">
-    <hashdropzone name=sn setting=s data=parameters> </hashdropzone>
 </div>
- -->
- <hr>
- <h2>New {{toDo}}</h2>
-
-    <form class="form-horizontal" role="form">
-    <h4> Dependencies </h4>
-        <div ng-repeat="s in dependencies">
-            <div class="form-group">
-                <label class="control-label col-sm-2" ng-for={{s}} >{{s}}</label>
-                <div class="col-sm-10 col-sm-6">
-                    <hashdropzone name=s setting=commandToDo.settings[s] data=parameters> </hashdropzone>
-                </div>
-            </div>
-        </div>
-
-    {{othersettings}}
-    {{othersettings.length}}
-
-     <div ng-if="othersettings.length>0">
-        <h4> Settings </h4>
-        <div ng-repeat="s in othersettings">
-            <div ng-if="commandToDo['dependencies'].indexOf(sn)=-1" class="form-group">
-                <label class="control-label col-sm-2" ng-for={{s}} >{{s}}</label>
-                <div class="col-sm-10 col-sm-6">
-                        <input type="email" 
-                               class="form-control" 
-                               ng-for=s 
-                               placeholder={{commandToDo['settings'][s].default }} >
-
-                </div>
-                <h4>{{commandToDo['dependencies'].indexOf(sn)>-1}}</h4>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group"> 
-        <div class="col-sm-offset-2 col-sm-10">
-          <button type="Check" class="btn btn-default" ng-click="check()">Check</button>
-        </div>
-    </div>
-    </form>
-       
-    <hbobject ng-if="checked_ok==true" data="thing_to_make"> </hbobject>
-
-
-    <button type="Run" class="btn btn-default" ng-click="run()">Submit</button>
-    <hr>
-
-<!-- 
-
-    <h2>New {{toDo}}</h2>
-
-    <h3> {{commandToDo.longname}} </h3>
-
-    <form class="form-horizontal" role="form">
-        <div ng-repeat="(sn,s) in commandToDo['settings']">
-            <div class="form-group">
-                <label class="control-label col-sm-2" ng-for={{sn}} >{{sn}}</label>
-                <div class="col-sm-10 col-sm-6">
-                    <div class="hbhashdrop col-sm-6"
-                           settingid={{sn}} 
-                           x-lvl-drop-target='true' 
-                           x-on-drop="dropped(dragEl, dropEl)"
-                           ng-model=parameters[sn]>
-                           Now: {{parameters[sn]}}
-                           </div>
-                </div>
-            </div>
-        </div>
-
-      <div class="form-group"> 
-        <div class="col-sm-offset-2 col-sm-10">
-          <button type="Check" class="btn btn-default">Check</button>
-        </div>
-      </div>
-    </form>
- -->
-    <!-- {{parameters}} -->
-
-<!--
-    <h2>Processing Options</h2>
-
-	<div ng-repeat="(Setting,info) in commands">
-		<h3> {{info.longname}} </h3>
-
-		<form class="form-horizontal" role="form">
-			<div ng-repeat="(sn,s) in info['settings']">
-				<div class="form-group">
-					<label class="control-label col-sm-2" for="Setting">{{sn}}</label>
-					<div class="col-sm-10 col-sm-4">
-						<input type="email" 
-						       class="form-control" 
-						       id="email" 
-							   placeholder={{s.default  " - type " + s.type}} >
-					</div>
-				</div>
-			</div>
-
-		  <div class="form-group"> 
-		    <div class="col-sm-offset-2 col-sm-10">
-		      <button type="Check" class="btn btn-default">Check</button>
-		    </div>
-		  </div>
-		</form>
-
-	</div>
+<hr>
+Onderaan
+{{parameters}}
+<!-- Do new  : {{do_new}} -->

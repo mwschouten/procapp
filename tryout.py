@@ -94,15 +94,15 @@ def setup():
 
     print 'r1 : ',r1
 
-    h1 = r1['result'].split(':')[1]
-    h2 = r2['result'].split(':')[1]
+    h1 = r1['result']['hash']
+    h2 = r2['result']['hash']
 
     print 'add 1+2 :', h1
     print 'add 2+3 :', h2
 
     # Thirs step: add the two results
     r3 = req(BASE_URL + 'api/check/Add2/?a={}&b={}',h1,h2)
-    h3 = r3['result'].split(':')[1]
+    h3 = r3['result']['hash']
     print '\nadd two results :', h3
 
     check_status([h1,h2,h3])

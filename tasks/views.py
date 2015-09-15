@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from django.shortcuts import render
 from django.http import JsonResponse
-
+from collections import defaultdict
 # Create your views here.
 from tasks.experts import tasks
 
@@ -45,10 +45,9 @@ def results(request):
     """ return all saved results
     provide e.g. {'query':{'hb_taskname':'Add'}} to select specific.
     """
-    print request
     print request.GET
     q = {k:v for k,v in request.GET.iteritems()}
-
+    
     # q = request.GET.getlist('h')
     # if q is None:
     #     return JsonResponse({'Error':'provide query data with e.g. /?query={}'})
@@ -59,8 +58,19 @@ def results(request):
         q['hb_taskname'] = q.get('hbtaskname',False) or tasks_that_make(thetype)
 
     rr = models.HBTask.objects.filter(status__gt=models.HBTask.NO_STATUS,**q)
-    out = {'results':[r.description for r in rr]} if rr else {'results':None}
-    return JsonResponse(out)
+
+    if rr:
+        res = defaultdict(list)
+        for r in rr:
+            res[r.resulttype].append(r)
+
+        res2 = {}
+        for k in res.keys():
+            res2[k] = [r.description for r in res[k]]
+    else:
+        res2 = None
+
+    return JsonResponse( {'results':res2} )
 
 
 def check(request,task_name):
@@ -271,4 +281,12 @@ def info(request, resulthash):
     """
     h = HbObject(resulthash)
     return JsonResponse({resulthash:h.info})    
+
+
+
+def projects(request):
+    """ list of all active projects
+    """
+    pp = models.Project.objects.filter(active=True).values_list('name',flat=True) or [None]
+    return JsonResponse({'result':list(pp)})    
 

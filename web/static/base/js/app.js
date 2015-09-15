@@ -43,8 +43,13 @@ app.config(function ($routeProvider) {
              templateUrl: 'web/static/base/partials/start.html'
             })
 
-        .otherwise({ redirectTo: '/search'});
+        .when('/test',
+            {controller: 'MainCtrl',
+             templateUrl: 'web/static/base/partials/start2.html'
+            })
+
+        .otherwise({ redirectTo: '/test'});
 });
-console.log('klaar')
+console.log('app setup done')
 
 

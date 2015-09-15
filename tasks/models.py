@@ -69,3 +69,11 @@ class Waiting(models.Model):
     def __str__(self):
         return '{} waiting for {}'.format(
             self.todo.resulthash[0:10],self.dependency.resulthash[0:10])
+
+class Project(models.Model):
+    name =  models.CharField(max_length=100,blank=False,null=False,unique=True)
+    active = models.BooleanField(default=True)
+    tasks = models.ManyToManyField(HBTask)
+
+    def __str__(self):
+        return 'Project {}'.format(self.name)

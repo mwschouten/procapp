@@ -70,7 +70,7 @@ app.directive('inlineEdit', function($timeout) {
 app.directive('hbobject', function () {
     return {
         restrict: 'E',
-        templateUrl: '/web/static/base/partials/hbobject.html',
+        templateUrl: 'web/static/base/partials/hbobject.html',
         replace: true,
         scope: {data:'='},
         link: function (scope, element, attrs) {

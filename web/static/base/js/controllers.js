@@ -42,8 +42,11 @@ app.controller("HeaderCtrl",function($scope) {
 
 
 
-app.controller("ProcessingCtrl",function($scope, procService,projectService,  leafletBoundsHelpers, leafletData) {
-
+app.controller("ProcessingCtrl",function($scope, 
+        procService,
+        projectService,  
+        leafletBoundsHelpers, 
+        leafletData) {
 
 	function switch_todo(toDo) {
 
@@ -116,8 +119,7 @@ app.controller("ProcessingCtrl",function($scope, procService,projectService,  le
             });
         }
     }            
-    
-
+   
     $scope.check = function(){
         // Check the current settings with the api of the processing server
         console.log('Go check', $scope.parameters)
@@ -140,32 +142,6 @@ app.controller("ProcessingCtrl",function($scope, procService,projectService,  le
                 });
     }
 
-
-    $scope.submit = function(){
-        // send in the curent hash (based on settings) for processing
-        console.log('Go check', $scope.thing_to_make)
-        procService.run($scope.thing_to_make)
-                .success(function (result) {
-                    if (result.hasOwnProperty('error')){
-                        $scope.error=true
-                        $scope.status = result.error
-                        console.log('Set error!')
-                    }   
-                    else{
-                        if (result.result==true){
-                            // $scope.thing_to_make.status='Success'
-                            console.log('****RESET***')
-                            setupProc($scope.toDo)
-                        }
-                    }
-                })
-                .error(function (error) {
-                    $scope.error=true
-                    $scope.status = 'Unable to submit: ' + error.message;
-                });
-    };
-
-
     $scope.switch_todo = function(item){
         console.log('Switch to',item)
         setupProc(item)
@@ -180,34 +156,28 @@ app.controller("ProcessingCtrl",function($scope, procService,projectService,  le
 
     function init_frame(){
         console.log('INITIALIZE')
-        // testDragDrop()
-        // listSetup()
-    
-        angular.extend($scope, {
-            amsterdam: { lat: 52.6, lng: 5.7, zoom: 6 },
-            layers: {baselayers: BASELAYERS},
-            controls: {
-                draw: {
-                    circle: false,
-                    polyline: false,
-                },
-            },
-            aoi: {}
-        });
+    angular.extend($scope, {
+        amsterdam: { lat: 52.6, lng: 5.7, zoom: 6 },
+        layers: {baselayers: BASELAYERS},
+        controls: {
+            draw: {circle: false, polyline: false},
+        },
+        aoi: {}
+    });
+    console.log('Controls: ', $scope.controls)
+    leafletData.getMap().then(function(map) {
+      var drawnItems = $scope.controls.edit.featureGroup;
+      map.on('draw:created', function (e) {
+        var layer = e.layer;      
+        $scope.aoi =  e.layer.toGeoJSON()
+        $scope.updateMap()
+      });               
+      $scope.searchresults = {features:[1,2,3]}
+    });
+    };
 
-        // console.log(JSON.stringify(layer.toGeoJSON()));
-        console.log('Controls: ', $scope.controls)
-        leafletData.getMap().then(function(map) {
-          var drawnItems = $scope.controls.edit.featureGroup;
-          map.on('draw:created', function (e) {
-            var layer = e.layer;      
-            $scope.aoi =  e.layer.toGeoJSON()
-            $scope.updateMap()
-          });               
 
-          $scope.searchresults = {features:[]}
-        });
-    }
+
 
     function init_projects(){
         projectService.requestProjects()
@@ -222,8 +192,7 @@ app.controller("ProcessingCtrl",function($scope, procService,projectService,  le
                     $scope.status = 'Unable to load projects: ' + error.message;
             });
     }
-
-
+    
     function init_procoptions(){
         procService.requestOptions()
         .success(function (result) {
@@ -235,25 +204,52 @@ app.controller("ProcessingCtrl",function($scope, procService,projectService,  le
             $scope.status = 'Unable to load processing options: ' + error.message;
         });
     }
-  
-    init_projects()
-        .success(function (result){
-            switch_project( $scope.current_project)
-        })
 
-    init_procoptions()
-        .success(function (result){
-            switch_todo( $scope.current_todo)
-        })
-
-    console.log('READY INITIALIZE')
-    // $scope.dropped('a','b')
     $scope.commands = procService.showOptions()
-
+    init_frame()
+    init_projects()
+    init_procoptions()
 
 
 });
 
+  
+    // init_projects()
+    //     .success(function (result){
+    //         switch_project( $scope.current_project)
+    //     });
+
+    // init_procoptions()
+    //     .success(function (result){
+    //         switch_todo( $scope.current_todo)
+    //     });
+
+    // console.log('READY INITIALIZE')
+
+
+    // $scope.submit = function(){
+    // send in the curent hash (based on settings) for processing
+    // console.log('Go check', $scope.thing_to_make)
+    // procService.run($scope.thing_to_make)
+    //         .success(function (result) {
+    //             if (result.hasOwnProperty('error')){
+    //                 $scope.error=true
+    //                 $scope.status = result.error
+    //                 console.log('Set error!')
+    //             }   
+    //             else{
+    //                 if (result.result==true){
+    //                     // $scope.thing_to_make.status='Success'
+    //                     console.log('****RESET***')
+    //                     setupProc($scope.toDo)
+    //                 }
+    //             }
+    //         })
+    // .error(function (error) {
+    //     $scope.error=true
+    //     $scope.status = 'Unable to submit: ' + error.message;
+    // })
+    // };
 
 
 

@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from django.shortcuts import render
 from django.http import JsonResponse
-from collections import defaultdict
+
 # Create your views here.
 from tasks.experts import tasks
 
@@ -45,9 +45,10 @@ def results(request):
     """ return all saved results
     provide e.g. {'query':{'hb_taskname':'Add'}} to select specific.
     """
+    print request
     print request.GET
     q = {k:v for k,v in request.GET.iteritems()}
-    
+
     # q = request.GET.getlist('h')
     # if q is None:
     #     return JsonResponse({'Error':'provide query data with e.g. /?query={}'})
@@ -138,6 +139,12 @@ def available(request):
     hashes = request.GET.getlist('h',None)
     available = {}
     for h in hashes:
+                
+        available.update({h:check_available_object(h)})
+
+    return JsonResponse(available)
+
+def check_available_object(h):
         thisone = False
         try:
         # if True:
@@ -160,11 +167,7 @@ def available(request):
 
         except Exception as e:
             print 'not available :',h
-        
-        available.update({h:thisone})
-
-        available.update({h:thisone})
-    return JsonResponse(available)
+        return thisone
 
 
 def status(request,resulthash):
@@ -248,7 +251,7 @@ def run(request, resulthash):
             status,fullstatus = check_stored_status(obj)
             thisone = fullstatus or True 
 
-    return JsonResponse({resulthash:thisone})
+    return JsonResponse({'result':thisone})
     # return JsonResponse(thisone)
 
 
@@ -258,8 +261,17 @@ def finished(request, resulthash):
     try:
         stored = models.HBTask.objects.get(resulthash=resulthash)
         stored.status = 2
+        if info:
+            stored.short_info = info
+
         stored.save()
         thisone = 'Ok'
+        runs = models.HBTaskRun.objects.filter(task=thisone,done=False)
+
+    # make run finished
+        for r in runs:
+            r.done = True
+            r.save()
     except:
         thisone = {'Error':'not found in database'}
         
@@ -281,12 +293,4 @@ def info(request, resulthash):
     """
     h = HbObject(resulthash)
     return JsonResponse({resulthash:h.info})    
-
-
-
-def projects(request):
-    """ list of all active projects
-    """
-    pp = models.Project.objects.filter(active=True).values_list('name',flat=True) or [None]
-    return JsonResponse({'result':list(pp)})    
 

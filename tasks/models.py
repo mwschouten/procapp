@@ -2,6 +2,8 @@ import datetime
 import json
 
 from django.db import models
+
+from tagging.registry import register as register_tagging
 # from django.contrib.gis.db import models
 # Create your models here.
 # class PointLP(models.Model):
@@ -26,6 +28,7 @@ class HBTask(models.Model):
     resulttype      = models.CharField(max_length=100,blank=False)
     status          = models.IntegerField(choices=STATUS_CHOICES,default=NO_STATUS)
     submitted       = models.DateTimeField(default = datetime.datetime.now())
+    short_info      = models.CharField(max_length=160,blank=True)
 
     def __str__(self):
         return '{} for {} ({})'.format(self.hb_taskname,self.resulthash[0:10], 
@@ -35,10 +38,15 @@ class HBTask(models.Model):
     def description(self):
         """ Describe
         """
+        info = (self.short_info or 
+                ','.join(self.tags)[0:160] or 
+                '{}:{:10.10s}'.format(self.resulttype,self.resulthash))
         return {'taskname':self.hb_taskname,
                 'settings':json.loads(self.parameters),
                 'result':{'hash':self.resulthash,'type':self.resulttype},
-                'status':self.STATUS_CHOICES[self.status][1]
+                'status':self.STATUS_CHOICES[self.status][1],
+                'short_info':info,
+                'date':self.submitted.isoformat()
                 }
 
 
@@ -69,11 +77,3 @@ class Waiting(models.Model):
     def __str__(self):
         return '{} waiting for {}'.format(
             self.todo.resulthash[0:10],self.dependency.resulthash[0:10])
-
-class Project(models.Model):
-    name =  models.CharField(max_length=100,blank=False,null=False,unique=True)
-    active = models.BooleanField(default=True)
-    tasks = models.ManyToManyField(HBTask)
-
-    def __str__(self):
-        return 'Project {}'.format(self.name)

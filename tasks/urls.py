@@ -29,4 +29,5 @@ urlpatterns = [
     url(r'^info/(?P<resulthash>.+?)/', views.info),
     url(r'^projects/', views.projects),
     url(r'^results/', views.results),
+    url(r'^projects/', views.projects),
 ]

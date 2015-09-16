@@ -1,16 +1,22 @@
 <div 	class="hbobject" 
 		x-lvl-draggable='true' 
-		ng-class="{true:'success', false:'pending'}[data.status=='Success']"
-        >
+		ng-class="{true:'success', false:'pending'}[data.status.toLowerCase()=='success']">
 
     <div hidden class="hbhash">{{data.result.hash}}</div>
     <div hidden class="hbtype">{{data.result.type}}</div>
-	<h4>{{data.result.type}}:{{data.result.hash}}</h4>
-	
-	<table>
-		<tr ng-repeat="(k,v) in data.settings">
-		<td>{{k}}</td> <td>{{v}}</td>
-		</tr>
-	</table>
+	<h4>{{data.date| date:"yyyy.MMM.dd HH:mm:ss"}}</h4> 
+    <p >{{data.result.hash}} : (type: {{data.result.type}})</p>
+<!--     <div ng-if="data.short_info.length>0">
+    </div> -->
+    <table>
+        <tr ng-repeat="(k,v) in data.settings">
+        <td>{{k}}</td> <td>{{v}}</td>
+        </tr>
+    </table>
+	<p>{{data.short_info}}  {{data.status}}
+    <button class="btn btn-small pull-right" ng-click="click_hbobject(data)">
+    <span class="glyphicon glyphicon-search success" aria-hidden="true"></span>
+    </button>
+    </p>
 
 </div>

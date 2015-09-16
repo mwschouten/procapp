@@ -72,9 +72,14 @@ app.directive('hbobject', function () {
         restrict: 'E',
         templateUrl: 'web/static/base/partials/hbobject.html',
         replace: true,
-        scope: {data:'='},
+        scope: {data:'=', current:'='},
         link: function (scope, element, attrs) {
-           console.log('HBOBJECT ',scope)
+           // console.log('HBOBJECT ',scope)
+
+        scope.click_hbobject = function(item){
+            console.log('Clicked hbobject',item)
+            scope.current = item;
+        }
         }
     }
 });
@@ -115,14 +120,14 @@ app.directive('hashdropzone', function ($sce) {
                     if (tp !== scope.setting.type){
                       scope.drop_ok=false
                     }
-                    console.log('Compare ',tp, scope.setting.type)
+                    // console.log('Compare ',tp, scope.setting.type)
                 }
 
                 if (scope.drop_ok) {
                   // Keep the copied hbhash!
                   scope.data[drop.attr("settingid")] = src;
                   scope.my_origin = src.substring(0,10)
-                  console.log('The element :',dragEl)
+                  // console.log('The element :',dragEl)
                 }
                 else{
                   scope.setError('Wrong type')
@@ -146,6 +151,7 @@ app.directive('hashdropzone', function ($sce) {
           scope.show_type = function(){
             scope.content = scope.setting.type
           }
+
 
         }
     }

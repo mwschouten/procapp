@@ -80,6 +80,8 @@ def cleanup():
          t.delete()
     for t in models.Waiting.objects.all():
          t.delete()
+    for t in models.HBTaskRun.objects.all():
+         t.delete()
 
     # remove physically
     if os.path.exists('hbhash'):
@@ -93,7 +95,6 @@ def setup():
     r2 = req(url,2,3)
 
     print 'r1 : ',r1
-
     h1 = r1['result']['hash']
     h2 = r2['result']['hash']
 

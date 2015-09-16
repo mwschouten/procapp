@@ -8,12 +8,15 @@
    <link href="{% static 'base/css/tsxcat.css' %}" rel="stylesheet">
 {% endblock %}
 
+
+
 {% block content %}
 	<div data-ng-app="TSXCatalogue">
-		    <div>
+		<div>
 		        <div data-ng-view=""></div>
-		    </div>
-	</div>
+	    </div>
+
+	</div> <!-- run by angular app -->
 {% endblock %}
 
 {% block add_scripts %}

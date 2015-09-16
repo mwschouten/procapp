@@ -12,6 +12,8 @@ from celery import shared_task
 
 import time
 
+# for matlab task
+import json,subprocess
 # # To test without django:
 # from celery import Celery
 # app = Celery('processing',backend='amqp')
@@ -69,7 +71,53 @@ def add(mytask, a,b):
         print '......Updated status {}/{}'.format(i,b)
 
     print 'Done ',b,' return ',a+b
-    return {'content':a+b,'info':'Computed {} + {} = {}'.format(a,b,a+b)}
+    info = {'short':'Computed {} + {} = {}'.format(a,b,a+b)}
+    return {'content':a+b,'info':info}
+
+
+@shared_task(name='addm')
+def addM(a,b):
+    print
+    # print 'a',a,type(a)
+    # print 'b',b,type(b)
+    # print
+    # print 'NOW DO addM - Add by Matlab'
+    s=json.dumps({'a':a,'b':b})
+    s=s.replace('"',r'\"')
+    # cmm = """matlab_batch "DePSI_rev='mathijs'; run ~/software/DePSI/pathsetup.m; sum_of_two('{}')" """.format(s)
+    cmm = """./matlab_batch.sh "DePSI_rev='mathijs'; run ~/software/DePSI/pathsetup.m;s='{}';disp(s);a=loadjson(s); disp(a)" """.format(s)
+    print
+    print 'Command: '
+    print cmm
+    print
+
+    return subprocess.call(cmm,shell=True)
+    info = {'short':'MATLAB computed {} + {}'.format(a,b)}
+    tomap = {'geojson':"""{ "type": "MultiPolygon",
+    "coordinates": [
+      [[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
+      [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
+       [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]
+      ]
+    }'}"""}
+    return {'content':a+b,'info':info,'tomap':tomap}
+
+
+
+
+class AddM(HbTask):
+
+    def define(self):
+        # Name, result
+        self.longname = 'Add two stored numbers by Matlab'
+        self.name = 'AddM'
+        self.version = '0.1'
+        self.result = HbObject('data')
+        # Define settings
+        self.settings.add('a',type=HbObject('data'))
+        self.settings.add('b',type=HbObject('data'))
+        self.runtask = addM
+
 
 
 class Add2(HbTask):

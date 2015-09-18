@@ -1,4 +1,5 @@
 
+
 <div class="btn-group" ng-class="{open: open}">
     <button type="button" class="btn btn-default dropdown-toggle" ng-click="open=!open">
     Projects <span class="caret">
@@ -10,13 +11,17 @@
     </ul>
 </div>    
 
+
+<!-- Show settings for this command -->
 <hr>
+<h2> {{command_active.longname}}</h2>
 <div ng-show="command_needs_yesno.dependencies">
 	<p>Dependencies</p>
 	<ul>
 	<li ng-repeat="(name,s) in command_needs.dependencies"> {{name}} : {{s.type}} </li>
 	</ul>
 </div>
+
 <div ng-show="command_needs_yesno.settings">
 	<p>Settings</p>
 	<ul>
@@ -24,17 +29,22 @@
 	</ul>
 </div>
 
-<!-- settings:{{command_needs.settings.keys()}}: {{command_needs.settings.length>0}}
- -->
+
 <hr>
 
+<!-- Select a command to run -->
+<div class="btn-group" ng-class="{open: openm}">
+    <button type="button" class="btn btn-default dropdown-toggle" ng-click="openm=!openm">Commands <span class="caret"></span></button>
+    <ul class="dropdown-menu">
+        <li ng-repeat="(name,c) in commands">
+            <a ng-click="setTodo(c)">{{name}}</a>
+        </li>
+    </ul>
+</div>    
 
-   <div class="btn-group" ng-class="{open: openm}">
-        <button type="button" class="btn btn-default dropdown-toggle" ng-click="openm=!openm">Commands <span class="caret"></span></button>
-        <ul class="dropdown-menu">
-            <li ng-repeat="(name,c) in commands">
-                <a ng-click="setTodo(c)">{{name}}</a>
-            </li>
-        </ul>
-    </div>    
-{{commands}}
+<div ng-repeat="(name,list) in results">
+    <h3>{{name}}</h3>
+    <ul>
+        <li ng-repeat="item in list"> {{item.taskname}} : {{item.short_info}}</li>
+    </ul>
+</div>

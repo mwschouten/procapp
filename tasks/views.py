@@ -17,6 +17,7 @@ import datetime
 
 import sys,traceback
 import inspect
+from collections import defaultdict
 
 ## HELPERS
 def available_hbtasks():
@@ -45,8 +46,6 @@ def results(request):
     """ return all saved results
     provide e.g. {'query':{'hb_taskname':'Add'}} to select specific.
     """
-    print request
-    print request.GET
     q = {k:v for k,v in request.GET.iteritems()}
 
     # q = request.GET.getlist('h')
@@ -149,8 +148,6 @@ def check_available_object(h):
         try:
         # if True:
             stored = models.HBTask.objects.get(resulthash=h)
-
-            print 'Look for ',h
             obj = HbObject(hash=h)
 
             # check if database status is still correct
@@ -222,8 +219,8 @@ def run(request, resulthash):
 
     # no status: submit now
     else:
-        print 'Now status      : ',stored.status
-        print 'Now submit task : ',stored.celery_taskname
+        # print 'Now status      : ',stored.status
+        # print 'Now submit task : ',stored.celery_taskname
 
         # to submit hb task
         todo = getattr(tasks,stored.hb_taskname)
@@ -241,7 +238,7 @@ def run(request, resulthash):
             dep = models.HBTask.objects.filter(resulthash__in=todo)
             for d in dep:
                 w,isnew = models.Waiting.objects.get_or_create(todo=stored,dependency=d)
-                print 'Created ? ',w,isnew
+                # print 'Created ? ',w,isnew
                 # submit dependency to run
                 run(None,resulthash=d.resulthash)
         else:
@@ -258,6 +255,8 @@ def run(request, resulthash):
 def finished(request, resulthash):
     """ mark as finished, remove waiting for this one, start the waiting if it can
     """
+    info = request.GET.get('short_info',None)
+    print 'INFO : ',info
     try:
         stored = models.HBTask.objects.get(resulthash=resulthash)
         stored.status = 2
@@ -293,4 +292,13 @@ def info(request, resulthash):
     """
     h = HbObject(resulthash)
     return JsonResponse({resulthash:h.info})    
+
+
+
+
+def projects(request):
+    """ read info
+    """
+    pp = models.Project.objects.filter(active=True)
+    return JsonResponse({'result':[p.name for p in pp]})    
 

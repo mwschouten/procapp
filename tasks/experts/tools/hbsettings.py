@@ -58,9 +58,9 @@ class Setting:
     def api(self):
         """ describes what is expected and defaulted
         """
-        print 'name ',self.name
-        print 'default ',self.default
-        print 'type ',self.type
+        # print 'name ',self.name
+        # print 'default ',self.default
+        # print 'type ',self.type
         if isinstance(self.type,HbObject):
             t = self.type.type
             # d = self.

@@ -54,7 +54,7 @@ def save_hbobject_content(content,hash):
 
     obj.content = content
     obj.save()
-    print 'Saved {}'.format(hash)
+    # print 'Saved {}'.format(hash)
     if DJANGO:
         # TODO: remotes need access to the database: through api?
         check_stored_status(obj)
@@ -88,7 +88,7 @@ def check_status(obj):
 def check_stored_status(obj):
     status_checked = None
     newstatus = check_status(obj)[0]
-    print 'CHECK_STORED_STATUS : ',obj.hash,newstatus
+    # print 'CHECK_STORED_STATUS : ',obj.hash,newstatus
 
     if DJANGO==False: # now to always try the remote
         stored = tasks.models.HBTask.objects.get(resulthash=obj.hash)
@@ -103,12 +103,14 @@ def check_stored_status(obj):
             url = base_url + '/finished/{}'.format(obj.hash)
             
             try:
+                print 'Object info is now:'
+                print obj.info
                 info = obj.info.get('short',False)
                 r = requests.get(url,params={'short_info':info})
             except:
                 r = requests.get(url)    
 
-            print r.ok,r.status_code
+            # print r.ok,r.status_code
         return newstatus,status_checked
 
 
@@ -192,8 +194,8 @@ class HbTask():
             if not result.known:
                 self.log.info('Save an empty result: {}'.format(result))
                 
-                print 'INFO ',self.result.info
-                print 'CONT ',self.result.content
+                # print 'INFO ',self.result.info
+                # print 'CONT ',self.result.content
 
                 result.save()
             
@@ -253,7 +255,7 @@ class HbTask():
             if h.known:
                 out[par] = h.status
             else:
-                print 'Object {} was not available!'.format(str(h))
+                # print 'Object {} was not available!'.format(str(h))
                 out[par] = ('ERROR_STATUS','Not available')
         return out
 

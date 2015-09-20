@@ -150,7 +150,7 @@ class Settings:
                 try:
                     self.settings[k].set(v)
                 except Exception as e:
-                    self.errors.append(e.msg)
+                    self.errors.append(e.message)
             else:
                 logging.error('{} is not a setting'.format(k))
 

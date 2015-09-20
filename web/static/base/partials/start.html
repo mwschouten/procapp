@@ -225,14 +225,17 @@
 
 </div>
 <!-- otherwise (not making a new) -->
-<div ng-hide="do_new">
+<div ng-hide="do_new" ng-controller="MapController as mapctrl">
     <div class="col-sm-8">
-    <leaflet 
-        center="amsterdam" controls="controls" bounds="bounds"
-        layers="layers"  height="1000px" width="100%"
-        geojson="geojson">
-    </leaflet>
+        <p> Name : {{name}} </p>
+        <p> Contact: {{contacts}}</p>
 
+<!--         <leaflet 
+            center="amsterdam" controls="controls" bounds="bounds"
+            layers="layers"  height="1000px" width="100%"
+            geojson="geojson">
+        </leaflet>
+ -->
     </div>
 </div>
 

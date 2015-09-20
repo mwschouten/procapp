@@ -1,72 +1,19 @@
 
 
-app.service('projectService', function ($http) {
-    this.requestProjects =  function(){
-            console.log('Do request projects')
-            return $http({
-                url:  "/api/projects/",
-                method: "GET",
-            }).success(function(result){
-                // make results available
-                console.log('Succesfully queried projects');
-                console.log(result)
-                this.active = result.result
-                this.current = this.active[0]
+app.service('procService', function ($http) {
 
-            })
-    }
 
-    this.set_current = function(name){
+    this.set_current_project = function(name){
         this.current = name
     }
 
-    this.get_active = function(){
-        return this.active
-    }
-    this.get_current = function(){
+    this.get_current_project = function(){
         return this.current
     }
-});
-
-app.service('procService', function ($http, projectService) {
-    this.status = 'Probeer eens wat';
-
-    this.requestOptions =  function(){
-            console.log('Do request options')
-            return $http({
-                url:  "/api/options/",
-                method: "GET",
-            }).success(function(jsonData){
-                // make results available
-                console.log('Succesfully queried options');
-                this.options = jsonData
-            })
-    }
-
-    this.getAll = function(what){
-            console.log('Set to make ',what)
-            this.result=[]
-            return $http({
-                url:  "/api/results/",
-                method: "GET",
-                params: what
-            }).success(function(jsonData){
-                // make results available
-                console.log('Succesfully queried all results for :',what);
-                console.log(jsonData.results)
-                this.result = jsonData
-            })
-    }
-
-    this.showOptions = function(){
-        console.log('Show options')
-        return this.options
-    }
-
 
     this.check = function(what,parameters){
         console.log('Check a ',what)
-        parameters.project = projectService.current
+        parameters.project = this.current
         console.log('Check with project: ',parameters.project)
             
             this.result=[]

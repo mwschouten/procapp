@@ -26,7 +26,7 @@ html, body {
     overflow-y: auto;
 }
 
-.container-fluid{
+.container-fluid.fixedfull{
     height: 100%;
     overflow-y: hidden; /* don't show content that exceeds my height */
 }

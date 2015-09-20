@@ -111,9 +111,22 @@ def check(request,task_name):
         return JsonResponse(
             {'error':'Invalid settings: {}'.format(action.settings.errors)})
 
+    
     action.set_result()
+    
+    a = action.result
+    add_to_project(action.result.hash,project)
+
     return JsonResponse(action.description)
 
+
+def add_to_project(resulthash,project):
+    """ add a task result to a project
+    provide hash and project name
+    """
+    t = models.HBTask.objects.get(resulthash=resulthash)
+    p = models.Project.objects.get(name=projectname)
+    p.tasks.add(t)
 
 def available(request):
     """

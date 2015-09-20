@@ -40,7 +40,9 @@ app.factory('getFromAPI', function($http) {
 
 
 
-app.controller('MainCtrl', function( getFromAPI ,$scope) {
+app.controller('MainCtrl', function( getFromAPI ,$scope,procService) {
+
+
 
   // $scope.action = function(a){
   //   console.log('selected ',a)
@@ -66,6 +68,9 @@ app.controller('MainCtrl', function( getFromAPI ,$scope) {
   // API connections
   function init(){
     $scope.commands = []
+    $scope.do_new = true
+    $scope.current_project = ''
+    
     console.log('Init MainCtrl')
     getData('/api/options','commands')
     getData('/api/projects','projects','result')
@@ -73,6 +78,7 @@ app.controller('MainCtrl', function( getFromAPI ,$scope) {
 
   $scope.setProject = function (project){
     console.log('Set project now to :',project)
+    procService.set_current_project(project)
     $scope.project_active = project;
 
     getData('api/results/?project__name='+project,'results','results')
@@ -83,23 +89,82 @@ app.controller('MainCtrl', function( getFromAPI ,$scope) {
   // Set the current command to execute (from the available tasks)
   $scope.setTodo = function (todo){
     console.log('Set active command now to :',todo)
+    $scope.do_new = true
+    $scope.parameters = {};
     $scope.command_active = todo
     $scope.command_needs = {dependencies:{},settings:{}}    
     $scope.command_needs_yesno = {dependencies:false,settings:false}
+    $scope.command_needs_types = {}
 	  for (var name in todo.settings) {
 
 	    if (todo.settings.hasOwnProperty(name)) {
         // add this one to deps or settings?
   			var addto = (todo.dependencies.indexOf(name)>-1)? 'dependencies' : 'settings'
+        var type = todo.settings[name].type
         // add, and make that one true (there is one or more)
         $scope.command_needs[addto][name] = todo.settings[name]
         $scope.command_needs_yesno[addto] = true
+        $scope.command_needs_types[type] = true
 	    }
 	  }
   }
 
+
+   
+  $scope.check = function(){
+      // Check the current settings with the api of the processing server
+      console.log('Go check', $scope.parameters)
+      procService.check( $scope.command_active.name, $scope.parameters)
+              .success(function (result) {
+                  if (result.hasOwnProperty('error')){
+                      $scope.error=true
+                      $scope.status = result.error
+                      console.log('Set error!')
+                  }   
+                  else{
+                      $scope.thing_to_make = result;
+                      $scope.checked_ok=true
+                      $scope.error=false
+              }
+              })
+              .error(function (error) {
+                  $scope.error=true
+                  $scope.status = 'Unable to check: ' + error.message;
+              });
+  }
+
+
+
+    $scope.submit = function(){
+      // send in the curent hash (based on settings) for processing
+      console.log('Go run', $scope.thing_to_make)
+      procService.run($scope.thing_to_make)
+              .success(function (result) {
+                  if (result.hasOwnProperty('error')){
+                      $scope.error=true
+                      $scope.status = result.error
+                      console.log('Set error!')
+                  }   
+                  else{
+                      if (result.result==true){
+                          // $scope.thing_to_make.status='Success'
+                          console.log('****RESET***')
+                          $scope.setProject($scope.project_active)
+                      }
+                  }
+              })
+      .error(function (error) {
+          $scope.error=true
+          $scope.status = 'Unable to submit: ' + error.message;
+      })
+    };
+
+
+
+
   init()
 
 }); <!-- end of controller -->
+
 
 

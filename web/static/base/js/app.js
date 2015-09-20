@@ -45,7 +45,7 @@ app.config(function ($routeProvider) {
 
         .when('/test',
             {controller: 'MainCtrl',
-             templateUrl: 'web/static/base/partials/start2.html'
+             templateUrl: 'web/static/base/partials/start3.html'
             })
 
         .otherwise({ redirectTo: '/test'});
